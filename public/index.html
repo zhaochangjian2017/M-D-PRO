@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周+日滚动复盘体系</title>
+<style>
+/* ===== 设计令牌 ===== */
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-hover: #1c2128;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --accent-gold: #d29922;
+  --accent-gold-light: #e3b341;
+  --up-red: #f85149;
+  --up-red-bg: rgba(248, 81, 73, 0.12);
+  --down-green: #3fb950;
+  --down-green-bg: rgba(63, 185, 80, 0.12);
+  --info-blue: #58a6ff;
+  --info-blue-bg: rgba(88, 166, 255, 0.12);
+  --warning-orange: #db6d28;
+  --warning-bg: rgba(219, 109, 40, 0.12);
+  --sidebar-width: 240px;
+  --radius: 8px;
+  --radius-sm: 6px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  min-width: 1024px;
+  overflow-x: auto;
+}
+
+/* ===== 侧边栏 ===== */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header .brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.sidebar-header .subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--bg-tertiary);
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.nav-item .nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sidebar-footer .week-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--accent-gold);
+  color: #0d1117;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+/* ===== 主内容区 ===== */
+.main {
+  margin-left: var(--sidebar-width);
+  padding: 24px 32px;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.page-header .desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ===== 视图路由 ===== */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ===== 通用组件 ===== */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title .title-bar {
+  width: 3px;
+  height: 14px;
+  background: var(--accent-gold);
+  border-radius: 2px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* 状态徽章 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 4px;
+}
+
+.badge-up { background: var(--up-red-bg); color: var(--up-red); }
+.badge-down { background: var(--down-green-bg); color: var(--down-green); }
+.badge-gold { background: rgba(210, 153, 34, 0.15); color: var(--accent-gold); }
+.badge-silver { background: rgba(192, 192, 192, 0.15); color: #c0c0c0; }
+.badge-bronze { background: rgba(205, 127, 50, 0.15); color: #cd7f32; }
+.badge-blue { background: var(--info-blue-bg); color: var(--info-blue); }
+.badge-warn { background: var(--warning-bg); color: var(--warning-orange); }
+.badge-muted { background: var(--bg-tertiary); color: var(--text-muted); }
+
+.badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* 数据行 */
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+
+.data-row:last-child { border-bottom: none; }
+
+.data-row .label { color: var(--text-secondary); }
+.data-row .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* 板块卡片 */
+.sector-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sector-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-1px);
+}
+
+.sector-card.gold-pool { border-left: 3px solid var(--up-red); }
+.sector-card.black-pool { border-left: 3px solid var(--down-green); }
+
+.sector-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sector-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sector-meta .meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sector-meta .meta-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.sector-meta .meta-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 中军信息 */
+.zhongjun-block {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.zj-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-gold-light);
+  margin-bottom: 6px;
+}
+
+.ma-indicators {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ma-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ma-tag.above { background: var(--up-red-bg); color: var(--up-red); }
+.ma-tag.below { background: var(--down-green-bg); color: var(--down-green); }
+
+/* 表格 */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.data-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.data-table .stock-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.data-table .stock-code {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+/* 时间线 */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.timeline-item:last-child { padding-bottom: 0; }
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 2px solid var(--accent-gold);
+}
+
+.timeline-item.danger::before { border-color: var(--down-green); }
+.timeline-item.info::before { border-color: var(--info-blue); }
+
+.timeline-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-content {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.timeline-content .highlight-up { color: var(--up-red); font-weight: 600; }
+.timeline-content .highlight-down { color: var(--down-green); font-weight: 600; }
+
+/* 执行清单 */
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.checklist-item:hover {
+  border-color: var(--border);
+}
+
+.checklist-item.checked {
+  opacity: 0.55;
+}
+
+.checklist-item.checked .cl-title {
+  text-decoration: line-through;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: all 0.15s;
+}
+
+.checklist-item.checked .checkbox {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+.checkbox svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.checklist-item.checked .checkbox svg { opacity: 1; }
+
+.cl-content { flex: 1; }
+
+.cl-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cl-time {
+  font-size: 11px;
+  color: var(--accent-gold);
+  background: rgba(210, 153, 34, 0.1);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.cl-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* 进度条 */
+.progress-bar {
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+/* KPI 数字卡 */
+.kpi-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 操作按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-gold);
+}
+
+.btn-primary {
+  background: var(--accent-gold);
+  color: #0d1117;
+  border-color: var(--accent-gold);
+}
+
+.btn-primary:hover {
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold-light);
+}
+
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+/* 标签页 */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+
+.tab:hover { color: var(--text-primary); }
+
+.tab.active {
+  color: var(--accent-gold);
+  border-bottom-color: var(--accent-gold);
+}
+
+/* 心法提示框 */
+.insight-box {
+  background: linear-gradient(135deg, rgba(210, 153, 34, 0.08), rgba(210, 153, 34, 0.02));
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-top: 16px;
+}
+
+.insight-box .insight-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+}
+
+.insight-box .insight-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.insight-box .insight-text strong {
+  color: var(--text-primary);
+}
+
+/* 滚动机制表 */
+.flow-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.flow-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.flow-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.flow-table .time-col {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--accent-gold);
+  width: 120px;
+}
+
+/* 状态选择器 */
+.status-selector {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.status-btn {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.status-btn:hover { border-color: var(--text-secondary); color: var(--text-secondary); }
+
+.status-btn.active-keep { background: var(--up-red-bg); color: var(--up-red); border-color: var(--up-red); }
+.status-btn.active-reduce { background: var(--warning-bg); color: var(--warning-orange); border-color: var(--warning-orange); }
+.status-btn.active-remove { background: var(--down-green-bg); color: var(--down-green); border-color: var(--down-green); }
+.status-btn.active-watch { background: var(--info-blue-bg); color: var(--info-blue); border-color: var(--info-blue); }
+.status-btn.active-try { background: var(--accent-gold); color: #0d1117; border-color: var(--accent-gold); }
+
+/* 挑战者卡片 */
+.challenger-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+
+.challenger-info { flex: 1; }
+
+.challenger-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.challenger-reason {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.challenger-days {
+  display: flex;
+  gap: 3px;
+}
+
+.day-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.day-dot.lit { background: var(--info-blue); }
+
+/* 响应式 */
+@media (max-width: 1200px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== 板块跟踪 ===== */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filter-bar .filter-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.filter-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.filter-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+.filter-btn.active {
+  background: var(--accent-gold);
+  color: #0d1117;
+  border-color: var(--accent-gold);
+}
+
+/* 迷你趋势柱状图 */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 32px;
+}
+
+.sparkline .bar {
+  width: 8px;
+  border-radius: 2px 2px 0 0;
+  min-height: 3px;
+  position: relative;
+  transition: all 0.15s;
+}
+
+.sparkline .bar.up { background: var(--up-red); }
+.sparkline .bar.down { background: var(--down-green); }
+
+.sparkline .bar:hover {
+  opacity: 0.8;
+}
+
+.sparkline .bar .bar-tip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 10;
+  margin-bottom: 4px;
+}
+
+.sparkline .bar:hover .bar-tip { display: block; }
+
+/* 趋势箭头 */
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.trend-indicator.up { color: var(--up-red); }
+.trend-indicator.down { color: var(--down-green); }
+.trend-indicator.flat { color: var(--text-muted); }
+
+.trend-indicator svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 跟踪表格展开行 */
+.tracking-detail-row {
+  display: none;
+  background: var(--bg-tertiary);
+}
+
+.tracking-detail-row.show { display: table-row; }
+
+.tracking-detail-row td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detail-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.detail-table th {
+  text-align: left;
+  padding: 6px 8px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-light);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 展开按钮 */
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.expand-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.expand-btn.expanded {
+  background: var(--accent-gold);
+  color: #0d1117;
+  border-color: var(--accent-gold);
+}
+
+.expand-btn svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s;
+}
+
+.expand-btn.expanded svg { transform: rotate(180deg); }
+
+/* 连续天数标签 */
+.streak-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.streak-tag.up { background: var(--up-red-bg); color: var(--up-red); }
+.streak-tag.down { background: var(--down-green-bg); color: var(--down-green); }
+.streak-tag.flat { background: var(--bg-tertiary); color: var(--text-muted); }
+
+/* 跟踪统计卡 */
+.track-stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.track-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.track-stat-icon.up { background: var(--up-red-bg); color: var(--up-red); }
+.track-stat-icon.down { background: var(--down-green-bg); color: var(--down-green); }
+.track-stat-icon.flat { background: var(--bg-tertiary); color: var(--text-muted); }
+
+.track-stat-icon svg { width: 20px; height: 20px; }
+
+.track-stat-info .stat-num {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-stat-info .stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 侧边栏 ===== -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="brand">周+日滚动复盘</div>
+    <div class="subtitle">Weekly Anchor + Daily Roll</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" data-route="dashboard" href="#dashboard">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      总览仪表盘
+    </a>
+    <a class="nav-item" data-route="weekly" href="#weekly">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      周度基准锚
+    </a>
+    <a class="nav-item" data-route="daily" href="#daily">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+      每日复盘
+    </a>
+    <a class="nav-item" data-route="tracking" href="#tracking">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      板块跟踪
+    </a>
+    <a class="nav-item" data-route="history" href="#history">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+      历史记录
+    </a>
+    <a class="nav-item" data-route="leaders" href="#leaders">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      龙头股池
+    </a>
+    <a class="nav-item" data-route="stock" href="#stock">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      个股选择
+    </a>
+    <a class="nav-item" data-route="checklist" href="#checklist">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      执行清单
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="week-tag">第35周</div>
+    <div>2026.08.24 - 08.28</div>
+    <div style="margin-top:4px;">模拟数据 · 原型演示</div>
+    <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="display:inline-block;padding:2px 6px;background:var(--bg-tertiary);border-radius:4px;font-family:monospace;" id="app-version">v1.0.0</span>
+        <span id="api-status" style="display:inline-flex;align-items:center;gap:4px;">
+          <span class="dot" id="api-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span>
+          <span id="api-status-text">离线</span>
+        </span>
+      </div>
+      <button onclick="saveToDatabase()" style="width:100%;padding:5px 8px;font-size:11px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;" id="save-btn" disabled>
+        💾 保存到数据库
+      </button>
+      <div id="sync-time" style="margin-top:4px;font-size:10px;color:var(--text-muted);text-align:center;"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ===== 主内容 ===== -->
+<main class="main">
+
+  <!-- ===== 视图：总览仪表盘 ===== -->
+  <section class="view active" id="view-dashboard">
+    <div class="page-header">
+      <h1>总览仪表盘</h1>
+      <div class="desc">本周作战地图全景 · 周度方向 + 中军状态 + 复盘进度一览</div>
+    </div>
+
+    <!-- KPI 行 -->
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="kpi-card">
+        <div class="kpi-label">周金池板块</div>
+        <div class="kpi-value" style="color:var(--up-red);">3</div>
+        <div class="kpi-sub">AI算力 · 机器人 · 金融科技</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">周黑池板块</div>
+        <div class="kpi-value" style="color:var(--down-green);">3</div>
+        <div class="kpi-sub">房地产 · 白酒 · 医药商业</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">中军健康度</div>
+        <div class="kpi-value" style="color:var(--accent-gold);">2/3</div>
+        <div class="kpi-sub">2只中军在5日线上方运行</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">本周复盘进度</div>
+        <div class="kpi-value" style="color:var(--info-blue);">4/5</div>
+        <div class="kpi-sub">已完成4个交易日复盘</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- 金池状态 -->
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>周金池 · 进攻方向</div>
+        <div id="dash-gold-pool"></div>
+      </div>
+
+      <!-- 黑池状态 -->
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>周黑池 · 避雷方向</div>
+        <div id="dash-black-pool"></div>
+      </div>
+    </div>
+
+    <!-- 中军状态 -->
+    <div class="card">
+      <div class="card-title"><span class="title-bar"></span>周中军 · 趋势锚定</div>
+      <div class="grid grid-3" id="dash-zhongjun"></div>
+    </div>
+
+    <!-- 最近复盘 -->
+    <div class="card">
+      <div class="card-title"><span class="title-bar"></span>最近复盘记录</div>
+      <div class="timeline" id="dash-timeline"></div>
+    </div>
+
+    <div class="insight-box">
+      <div class="insight-title">核心心法</div>
+      <div class="insight-text">
+        <strong>周度决定主战场</strong>（决不可轻易换），<strong>日内决定开仓节奏</strong>（只在回踩或启动点开）。绝不在周黑池里找机会，也绝不在周金池外开重仓。
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：周度基准锚 ===== -->
+  <section class="view" id="view-weekly">
+    <div class="page-header">
+      <h1>周度基准锚</h1>
+      <div class="desc">周末/周一盘前建立 · 不看分时，只看周线级别，确立本周作战地图</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="gold">周金池（进攻）</div>
+      <div class="tab" data-tab="black">周黑池（避雷）</div>
+      <div class="tab" data-tab="zhongjun">周中军（锚定）</div>
+    </div>
+
+    <!-- 金池 -->
+    <div class="tab-content" id="tab-gold">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>本周核心观察池（3个）</div>
+        <div class="grid grid-3" id="weekly-gold-cards"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>筛选依据 · 上周数据</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>板块</th>
+              <th>周涨幅</th>
+              <th>周成交额（亿）</th>
+              <th>周线形态</th>
+              <th>入选理由</th>
+            </tr>
+          </thead>
+          <tbody id="weekly-gold-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 黑池 -->
+    <div class="tab-content" id="tab-black" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>本周黑名单（3个）· 写入即不碰</div>
+        <div class="grid grid-3" id="weekly-black-cards"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>避雷依据 · 上周数据</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>板块</th>
+              <th>周跌幅</th>
+              <th>周线状态</th>
+              <th>量能特征</th>
+              <th>避雷理由</th>
+            </tr>
+          </thead>
+          <tbody id="weekly-black-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 中军 -->
+    <div class="tab-content" id="tab-zhongjun" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>每个金池板块的中军锚 · 中军不坏，板块逻辑就在</div>
+        <div class="grid grid-3" id="weekly-zj-cards"></div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-title">中军判定标准</div>
+        <div class="insight-text">
+          在每个金池板块中，找出<strong>周成交额最大、趋势最稳的大市值中军</strong>。只要中军周线没坏（未跌破20周线、周线MACD未死叉），板块逻辑就还在。中军是板块的"定海神针"，中军破位则板块进入退潮期。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：每日复盘 ===== -->
+  <section class="view" id="view-daily">
+    <div class="page-header">
+      <h1>每日复盘 · 滚动修正</h1>
+      <div class="desc">每天收盘后对比当日数据与周度基准，做加减分动态调整</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="verify">强势验证</div>
+      <div class="tab" data-tab="challenger">新挑战者</div>
+      <div class="tab" data-tab="avoid">避雷确认</div>
+      <div class="tab" data-tab="flow">滚动机制</div>
+    </div>
+
+    <!-- 强势验证 -->
+    <div class="tab-content" id="tab-verify">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>金池板块续强验证 · 点击状态可切换</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>板块</th>
+              <th>今日涨幅</th>
+              <th>涨停数</th>
+              <th>中军状态</th>
+              <th>连续跑输天数</th>
+              <th>当前判定</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="daily-verify-table"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>判定规则</div>
+        <div class="data-row"><span class="label">续强加分</span><span class="value" style="color:var(--up-red);">继续领涨 + 涨停梯队完整 → 保持高优先级</span></div>
+        <div class="data-row"><span class="label">上涨中继</span><span class="value" style="color:var(--warning-orange);">冲高回落 + 中军未破5日线 → 观察，不轻易剔除</span></div>
+        <div class="data-row"><span class="label">退潮降级</span><span class="value" style="color:var(--down-green);">连续2日跑输大盘 + 中军跌破10日线 → 降级/剔除</span></div>
+      </div>
+    </div>
+
+    <!-- 挑战者 -->
+    <div class="tab-content" id="tab-challenger" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>替补观察池 · 连续3日走强则周末升级为新金池</div>
+        <div id="daily-challenger-list"></div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-title">挑战者处理原则</div>
+        <div class="insight-text">
+          若当日出现之前不在周金池的新板块（如受突发政策刺激），<strong>暂不重仓</strong>。将其纳入"替补观察"，若周中<strong>连续3日走强</strong>，则周末升级为新金池。盘中可小仓位试错，但正式切换等到周末确认。
+        </div>
+      </div>
+    </div>
+
+    <!-- 避雷确认 -->
+    <div class="tab-content" id="tab-avoid" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>黑池板块恶化确认</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>板块</th>
+              <th>今日表现</th>
+              <th>龙头状态</th>
+              <th>量能</th>
+              <th>确认结果</th>
+            </tr>
+          </thead>
+          <tbody id="daily-avoid-table"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>避雷判定规则</div>
+        <div class="data-row"><span class="label">确认避雷</span><span class="value" style="color:var(--down-green);">继续下跌 或 龙头跌停 → 确认避雷，坚决不碰</span></div>
+        <div class="data-row"><span class="label">反抽不参与</span><span class="value" style="color:var(--warning-orange);">超跌反弹 + 无量 + 无涨停 → 视为反抽，继续避雷</span></div>
+      </div>
+    </div>
+
+    <!-- 滚动机制 -->
+    <div class="tab-content" id="tab-flow" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>动态滚动机制 · 硬性过滤条件</div>
+        <table class="flow-table">
+          <thead>
+            <tr>
+              <th>时间节点</th>
+              <th>操作动作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="time-col">每日开盘前</td>
+              <td>扫一眼隔夜A50和昨日持仓板块的竞价一字板。若周金池竞价出现<strong style="color:var(--down-green);">大面积核按钮</strong>，则当日降低该板块仓位。</td>
+            </tr>
+            <tr>
+              <td class="time-col">每日收盘后</td>
+              <td>更新板块3日涨幅排名。若原金池<strong style="color:var(--down-green);">跌出前5</strong>，新方向<strong style="color:var(--up-red);">杀入前3</strong>，则盘中开始小仓位试错新方向，但正式切换等到周末确认。</td>
+            </tr>
+            <tr>
+              <td class="time-col">每周五收盘</td>
+              <td><strong style="color:var(--accent-gold);">强制清零</strong>，根据本周5天累计数据，重新投票选出下周的金池和黑池，开启新循环。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：板块跟踪 ===== -->
+  <section class="view" id="view-tracking">
+    <div class="page-header">
+      <h1>强势板块连续跟踪</h1>
+      <div class="desc">多日数据持续追踪 · 关键指标逐步变化 · 自动判定走强或走弱趋势</div>
+    </div>
+
+    <!-- 跟踪统计 -->
+    <div class="grid grid-3" style="margin-bottom:16px;">
+      <div class="track-stat-card">
+        <div class="track-stat-icon up">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="track-stat-info">
+          <div class="stat-num" style="color:var(--up-red);" id="track-up-count">0</div>
+          <div class="stat-label">持续走强板块</div>
+        </div>
+      </div>
+      <div class="track-stat-card">
+        <div class="track-stat-icon down">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </div>
+        <div class="track-stat-info">
+          <div class="stat-num" style="color:var(--down-green);" id="track-down-count">0</div>
+          <div class="stat-label">逐步走弱板块</div>
+        </div>
+      </div>
+      <div class="track-stat-card">
+        <div class="track-stat-icon flat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/></svg>
+        </div>
+        <div class="track-stat-info">
+          <div class="stat-num" style="color:var(--text-muted);" id="track-flat-count">0</div>
+          <div class="stat-label">震荡整理板块</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 跟踪列表 -->
+    <div class="card">
+      <div class="card-title">
+        <span class="title-bar"></span>
+        板块跟踪列表 · 点击展开查看每日明细
+        <div class="filter-bar" style="margin-left:auto;margin-bottom:0;">
+          <span class="filter-label">筛选：</span>
+          <button class="filter-btn active" data-filter="all" onclick="setTrackFilter('all')">全部</button>
+          <button class="filter-btn" data-filter="up" onclick="setTrackFilter('up')">走强</button>
+          <button class="filter-btn" data-filter="down" onclick="setTrackFilter('down')">走弱</button>
+          <button class="filter-btn" data-filter="flat" onclick="setTrackFilter('flat')">震荡</button>
+        </div>
+      </div>
+      <table class="data-table" id="tracking-table">
+        <thead>
+          <tr>
+            <th style="width:36px;"></th>
+            <th>板块</th>
+            <th>所属行业</th>
+            <th>近5日涨幅趋势</th>
+            <th>近3日累计</th>
+            <th>20日涨幅</th>
+            <th>涨停数变化</th>
+            <th>中军今日</th>
+            <th>连续天数</th>
+            <th>趋势判定</th>
+            <th>操作建议</th>
+          </tr>
+        </thead>
+        <tbody id="tracking-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="insight-box">
+      <div class="insight-title">跟踪判定逻辑</div>
+      <div class="insight-text">
+        <strong>走强判定</strong>：连续2日以上涨幅为正，且涨停数递增或维持高位，中军在5日线上方运行 → 维持高优先级，可加仓。<br>
+        <strong>走弱判定</strong>：连续2日以上跑输大盘，涨停数递减，中军跌破5日线 → 降级观察，减仓或剔除。<br>
+        <strong>震荡判定</strong>：涨跌交替，涨停数波动，中军在5/10日线之间震荡 → 持有观望，不追高不杀跌。
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：历史记录 ===== -->
+  <section class="view" id="view-history">
+    <div class="page-header">
+      <h1>历史复盘记录</h1>
+      <div class="desc">最近10个交易日复盘档案 · 每日大盘、金池表现、中军状态、操作结论全记录</div>
+    </div>
+
+    <!-- 统计卡 -->
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="kpi-card">
+        <div class="kpi-label">复盘天数</div>
+        <div class="kpi-value" style="color:var(--accent-gold);" id="hist-total-days">0</div>
+        <div class="kpi-sub">最近10个交易日</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">大盘上涨天数</div>
+        <div class="kpi-value" style="color:var(--up-red);" id="hist-up-days">0</div>
+        <div class="kpi-sub">收红交易日</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">平均涨停数</div>
+        <div class="kpi-value" style="color:var(--info-blue);" id="hist-avg-limit">0</div>
+        <div class="kpi-sub">全市场涨停家数均值</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">操作记录数</div>
+        <div class="kpi-value" style="color:var(--warning-orange);" id="hist-actions">0</div>
+        <div class="kpi-sub">累计加减仓操作</div>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="card" style="padding:12px 18px;">
+      <div class="filter-bar" style="margin-bottom:0;">
+        <span class="filter-label">时间范围：</span>
+        <button class="filter-btn active" data-hist-filter="10" onclick="setHistoryFilter(10)">最近10天</button>
+        <button class="filter-btn" data-hist-filter="5" onclick="setHistoryFilter(5)">最近5天</button>
+        <span class="filter-label" style="margin-left:16px;">情绪：</span>
+        <button class="filter-btn active" data-hist-sentiment="all" onclick="setHistorySentiment('all')">全部</button>
+        <button class="filter-btn" data-hist-sentiment="偏暖" onclick="setHistorySentiment('偏暖')">偏暖</button>
+        <button class="filter-btn" data-hist-sentiment="中性" onclick="setHistorySentiment('中性')">中性</button>
+        <button class="filter-btn" data-hist-sentiment="偏冷" onclick="setHistorySentiment('偏冷')">偏冷</button>
+      </div>
+    </div>
+
+    <!-- 历史记录列表 -->
+    <div id="history-list"></div>
+  </section>
+
+  <!-- ===== 视图：龙头股池 ===== -->
+  <section class="view" id="view-leaders">
+    <div class="page-header">
+      <h1>龙头股池 · 龙一龙二龙三</h1>
+      <div class="desc">每个金池板块的龙头排名 · 核心原因 · 上涨逻辑 · 关键指标 · 风险提示</div>
+    </div>
+
+    <!-- 统计卡 -->
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="kpi-card">
+        <div class="kpi-label">龙头总数</div>
+        <div class="kpi-value" style="color:var(--accent-gold);" id="leader-total">0</div>
+        <div class="kpi-sub">3个板块 × 龙一二三</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">连板龙头</div>
+        <div class="kpi-value" style="color:var(--up-red);" id="leader-boards">0</div>
+        <div class="kpi-sub">连续涨停先锋股</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">中军龙头</div>
+        <div class="kpi-value" style="color:var(--info-blue);" id="leader-zhongjun">0</div>
+        <div class="kpi-sub">大市值趋势中军</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">今日涨停</div>
+        <div class="kpi-value" style="color:var(--warning-orange);" id="leader-limitup">0</div>
+        <div class="kpi-sub">龙头股今日涨停数</div>
+      </div>
+    </div>
+
+    <!-- 板块筛选 -->
+    <div class="card" style="padding:12px 18px;">
+      <div class="filter-bar" style="margin-bottom:0;">
+        <span class="filter-label">板块筛选：</span>
+        <button class="filter-btn active" data-leader-filter="all" onclick="setLeaderFilter('all')">全部</button>
+        <button class="filter-btn" data-leader-filter="AI算力" onclick="setLeaderFilter('AI算力')">AI算力</button>
+        <button class="filter-btn" data-leader-filter="机器人" onclick="setLeaderFilter('机器人')">机器人</button>
+        <button class="filter-btn" data-leader-filter="金融科技" onclick="setLeaderFilter('金融科技')">金融科技</button>
+      </div>
+    </div>
+
+    <!-- 龙头股列表 -->
+    <div id="leaders-list"></div>
+
+    <div class="insight-box">
+      <div class="insight-title">龙头判定心法</div>
+      <div class="insight-text">
+        <strong>龙一</strong>：板块内市值最大、成交额最高、趋势最稳的中军，或连板高度最高的情绪标，是板块的"定海神针"。<br>
+        <strong>龙二</strong>：板块内涨幅第二、成交额第二的核心标的，跟随龙一节奏，弹性通常大于龙一。<br>
+        <strong>龙三</strong>：板块内新晋爆发或低位补涨的弹性标的，涨幅爆发力强但持续性需验证，适合小仓位套利。<br>
+        <strong>核心逻辑</strong>：龙头不倒，板块不死；龙头破位，板块退潮。只在金池里选龙头，绝不跨池选股。
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：个股选择 ===== -->
+  <section class="view" id="view-stock">
+    <div class="page-header">
+      <h1>个股选择 · 只在金池里挑龙头</h1>
+      <div class="desc">一旦周度方向确立，选股不跨池，只在3个核心池里筛</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="aggressive">进攻激进型</div>
+      <div class="tab" data-tab="steady">稳健趋势型</div>
+      <div class="tab" data-tab="catchup">补涨套利型</div>
+    </div>
+
+    <!-- 激进型 -->
+    <div class="tab-content" id="tab-aggressive">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>连板先锋 · 情绪标（需结合竞价高开和分时承接）</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>股票</th>
+              <th>所属板块</th>
+              <th>连板数</th>
+              <th>今日竞价</th>
+              <th>分时承接</th>
+              <th>情绪等级</th>
+            </tr>
+          </thead>
+          <tbody id="stock-aggressive-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 稳健型 -->
+    <div class="tab-content" id="tab-steady" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>中军回踩 · 低吸做波段（周线多头 + 日线回踩10/20日不破）</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>股票</th>
+              <th>所属板块</th>
+              <th>周线排列</th>
+              <th>回踩均线</th>
+              <th>支撑有效性</th>
+              <th>建议仓位</th>
+            </tr>
+          </thead>
+          <tbody id="stock-steady-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 补涨型 -->
+    <div class="tab-content" id="tab-catchup" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="title-bar"></span>低位补涨 · 弹性套利（中军大涨后挖掘同板块低位放量首板/小市值）</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>股票</th>
+              <th>所属板块</th>
+              <th>市值（亿）</th>
+              <th>相对位置</th>
+              <th>量能特征</th>
+              <th>套利空间</th>
+            </tr>
+          </thead>
+          <tbody id="stock-catchup-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <div class="insight-title">选股铁律</div>
+      <div class="insight-text">
+        <strong>不跨池选股</strong>——一旦周度方向确立，只在这3个核心金池里筛。进攻激进型抓连板先锋，稳健趋势型选中军回踩，补涨套利型挖低位弹性。<strong>绝不在周黑池里找机会，也绝不在周金池外开重仓。</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 视图：执行清单 ===== -->
+  <section class="view" id="view-checklist">
+    <div class="page-header">
+      <h1>执行清单 · 每晚30分钟复盘</h1>
+      <div class="desc">标准化复盘动作 · 点击勾选完成 · 养成肌肉记忆</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="title-bar"></span>
+        今晚复盘进度
+        <span id="cl-progress-text" style="margin-left:auto;font-size:12px;color:var(--text-secondary);">0 / 4 完成</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="cl-progress-fill" style="width:0%;"></div>
+      </div>
+    </div>
+
+    <div id="checklist-container"></div>
+
+    <div class="insight-box">
+      <div class="insight-title">复盘心法</div>
+      <div class="insight-text">
+        每晚<strong>30分钟</strong>，雷打不动。看排名→看中军→看梯队→记结论，四步走完，当天的市场就被你"吃透"了。<strong>周度决定主战场，日内决定开仓节奏。</strong>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 免责声明 -->
+<footer style="padding:20px 30px;border-top:1px solid var(--border);background:var(--bg-secondary);">
+  <div style="max-width:1200px;margin:0 auto;font-size:12px;color:var(--text-muted);line-height:1.8;">
+    <div style="font-weight:600;color:var(--text-secondary);margin-bottom:6px;">⚠ 免责声明与风险提示</div>
+    <div>
+      本应用为个人复盘方法论学习工具，<strong>所有股票名称、代码、价格、涨幅、成交额等数据均为模拟示例，非真实市场数据</strong>，不构成任何投资建议、推荐或邀约。
+      文中涉及的"选股"、"加仓"、"减仓"、"清仓"等表述均为复盘方法论的流程描述，不针对任何具体证券。
+      <strong>投资有风险，入市需谨慎。过往表现不代表未来收益。</strong>
+      使用者应独立判断并承担投资决策的全部风险，本工具开发者不对任何投资损失承担责任。
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== 应用状态 =====
+const state = {
+  version: 'v1.0.0',
+  versionDate: '2026-08-30',
+  apiConnected: false,
+  lastSyncTime: null,
+  currentRoute: 'dashboard',
+  currentTab: {},
+  goldPool: [
+    { id: 'ai', name: 'AI算力', weekChange: '+8.3%', weekVolume: '1,280', pattern: '周线放量突破', status: 'keep', zhongjun: '寒武纪', reason: '上周周涨幅第2 + 周成交额第1 + 周线放量突破前高' },
+    { id: 'robot', name: '机器人', weekChange: '+6.7%', weekVolume: '860', pattern: '周线连阳', status: 'keep', zhongjun: '埃斯顿', reason: '上周周涨幅第4 + 政策催化持续 + 周线MACD金叉' },
+    { id: 'fintech', name: '金融科技', weekChange: '+4.1%', weekVolume: '720', pattern: '周线企稳', status: 'watch', zhongjun: '恒生电子', reason: '上周周成交额第5 + 周线缩量止跌 + 低位启动迹象' }
+  ],
+  blackPool: [
+    { id: 'realestate', name: '房地产开发', weekChange: '-5.2%', lineStatus: '跌破20周线', volume: '缩量阴跌', reason: '上周周跌幅第1 + 周线破位 + 龙头连续跌停' },
+    { id: 'baijiu', name: '白酒', weekChange: '-3.8%', lineStatus: '周线空头排列', volume: '放量下跌', reason: '上周周跌幅第3 + 周线MACD死叉 + 消费数据不及预期' },
+    { id: 'pharma', name: '医药商业', weekChange: '-2.9%', lineStatus: '跌破10周线', volume: '缩量阴跌', reason: '上周周跌幅第5 + 集采预期压制 + 周线趋势走坏' }
+  ],
+  zhongjun: [
+    { name: '寒武纪', code: '688256', sector: 'AI算力', price: '248.50', dayChange: '+3.2%', ma5: 'above', ma10: 'above', ma20: 'above', weekTrend: '周线多头排列', health: 'good' },
+    { name: '埃斯顿', code: '002747', sector: '机器人', price: '18.62', dayChange: '+1.5%', ma5: 'above', ma10: 'above', ma20: 'above', weekTrend: '周线连阳', health: 'good' },
+    { name: '恒生电子', code: '600570', sector: '金融科技', price: '32.15', dayChange: '-0.8%', ma5: 'below', ma10: 'above', ma20: 'above', weekTrend: '周线企稳', health: 'warn' }
+  ],
+  dailyVerify: [
+    { sector: 'AI算力', dayChange: '+2.8%', limitUp: 5, zjStatus: '寒武纪 +3.2%，5日线上方', loseDays: 0, verdict: 'keep', verdictText: '维持' },
+    { sector: '机器人', dayChange: '+1.9%', limitUp: 3, zjStatus: '埃斯顿 +1.5%，5日线上方', loseDays: 0, verdict: 'keep', verdictText: '维持' },
+    { sector: '金融科技', dayChange: '-0.5%', limitUp: 1, zjStatus: '恒生电子 -0.8%，跌破5日线', loseDays: 1, verdict: 'watch', verdictText: '观察' }
+  ],
+  challengers: [
+    { name: '数据要素', reason: '突发政策刺激，今日板块涨幅第2', days: 2, target: 3 },
+    { name: '低空经济', reason: '行业标准落地，连续2日放量', days: 2, target: 3 },
+    { name: '存储芯片', reason: '周期反转预期，今日首板2只', days: 1, target: 3 }
+  ],
+  dailyAvoid: [
+    { sector: '房地产开发', dayChange: '-1.8%', leader: '保利发展 -2.1%', volume: '缩量', result: '确认避雷' },
+    { sector: '白酒', dayChange: '+0.3%', leader: '贵州茅台 +0.1%', volume: '无量反弹', result: '反抽不参与' },
+    { sector: '医药商业', dayChange: '-1.2%', leader: '上海医药 -1.5%', volume: '缩量阴跌', result: '确认避雷' }
+  ],
+  stockAggressive: [
+    { name: '鸿博股份', code: '002229', sector: 'AI算力', boards: '4连板', auction: '+5.2% 高开', support: '分时承接强', emotion: '高' },
+    { name: '中大力德', code: '002896', sector: '机器人', boards: '3连板', auction: '+3.8% 高开', support: '回踩均线有承接', emotion: '中高' },
+    { name: '铜牛信息', code: '300895', sector: 'AI算力', boards: '2连板', auction: '+7.1% 高开', support: '分时承接强', emotion: '高' }
+  ],
+  stockSteady: [
+    { name: '寒武纪', code: '688256', sector: 'AI算力', weekAlign: '多头排列', pullback: '回踩10日线', support: '支撑有效', position: '20%' },
+    { name: '埃斯顿', code: '002747', sector: '机器人', weekAlign: '多头排列', pullback: '回踩20日线', support: '支撑有效', position: '15%' },
+    { name: '浪潮信息', code: '000977', sector: 'AI算力', weekAlign: '多头排列', pullback: '回踩10日线', support: '待确认', position: '10%' }
+  ],
+  stockCatchup: [
+    { name: '云从科技', code: '688327', sector: 'AI算力', cap: '85', position: '低位', volume: '放量首板', space: '中高' },
+    { name: '新时达', code: '002527', sector: '机器人', cap: '62', position: '低位', volume: '放量异动', space: '中' },
+    { name: '赢时胜', code: '300377', sector: '金融科技', cap: '78', position: '低位', volume: '缩量企稳', space: '中低' }
+  ],
+  timeline: [
+    { date: '08-28 周四', type: 'normal', content: 'AI算力板块续强，<span class="highlight-up">寒武纪大涨3.2%</span>，涨停梯队5只完整。金融科技冲高回落，恒生电子跌破5日线，降级为观察。' },
+    { date: '08-27 周三', type: 'info', content: '数据要素板块受政策刺激爆发，<span class="highlight-up">板块涨幅第2</span>，纳入替补观察池。机器人板块中军埃斯顿回踩10日线获支撑。' },
+    { date: '08-26 周二', type: 'normal', content: '周金池三板块全线飘红，AI算力领涨。<span class="highlight-down">房地产板块龙头保利发展跌停</span>，确认避雷。' },
+    { date: '08-25 周一', type: 'danger', content: '开盘前确认周金池：AI算力、机器人、金融科技。周黑池：房地产、白酒、医药商业。白酒板块竞价核按钮，全周规避。' }
+  ],
+  checklist: [
+    { id: 1, time: '5分钟', title: '看排名', desc: '查看今日板块涨幅榜，比对本周累计涨幅榜，看金池是否掉队。', checked: false },
+    { id: 2, time: '10分钟', title: '看中军', desc: '检查持仓板块中军是否在5/10日均线上方运行，破线则预警。', checked: false },
+    { id: 3, time: '5分钟', title: '看梯队', desc: '统计金池板块涨停数，若连续减少，注意风险。', checked: false },
+    { id: 4, time: '10分钟', title: '记结论', desc: '在表格中给每个金池标注"维持/减仓/剔除"，给新方向标注"观察/试仓"。', checked: false }
+  ],
+  trackFilter: 'all',
+  expandedTrackRows: {},
+  historyFilter: 10,
+  historySentiment: 'all',
+  expandedHistoryRows: {},
+  sectorTracking: [
+    {
+      id: 'ai',
+      name: 'AI算力',
+      industry: '科技/半导体',
+      zhongjun: '寒武纪',
+      status: 'keep',
+      trend: 'up',
+      streak: 3,
+      streakType: 'up',
+      change20d: 19.8,
+      dailyData: [
+        { date: '08-15', change: 0.5, change20d: 5.2, limitUp: 1, volume: 620, zjChange: 0.3, rank: 8 },
+        { date: '08-18', change: 0.8, change20d: 6.1, limitUp: 2, volume: 720, zjChange: 0.6, rank: 6 },
+        { date: '08-19', change: 1.5, change20d: 7.8, limitUp: 3, volume: 880, zjChange: 1.2, rank: 4 },
+        { date: '08-20', change: -0.3, change20d: 7.2, limitUp: 1, volume: 760, zjChange: -0.2, rank: 12 },
+        { date: '08-21', change: 1.8, change20d: 9.5, limitUp: 3, volume: 950, zjChange: 1.5, rank: 3 },
+        { date: '08-22', change: 1.2, change20d: 10.8, limitUp: 2, volume: 980, zjChange: 0.8, rank: 5 },
+        { date: '08-25', change: 2.5, change20d: 13.5, limitUp: 4, volume: 1150, zjChange: 2.1, rank: 3 },
+        { date: '08-26', change: 3.1, change20d: 16.2, limitUp: 6, volume: 1380, zjChange: 2.8, rank: 1 },
+        { date: '08-27', change: 1.8, change20d: 17.5, limitUp: 3, volume: 1200, zjChange: 1.5, rank: 2 },
+        { date: '08-28', change: 2.8, change20d: 19.8, limitUp: 5, volume: 1280, zjChange: 3.2, rank: 1 }
+      ],
+      recommendation: '持续走强，维持高优先级，中军趋势健康'
+    },
+    {
+      id: 'robot',
+      name: '机器人',
+      industry: '制造/高端装备',
+      zhongjun: '埃斯顿',
+      status: 'keep',
+      trend: 'up',
+      streak: 2,
+      streakType: 'up',
+      change20d: 12.3,
+      dailyData: [
+        { date: '08-15', change: 0.2, change20d: 3.5, limitUp: 0, volume: 380, zjChange: 0.1, rank: 12 },
+        { date: '08-18', change: 0.5, change20d: 4.2, limitUp: 1, volume: 420, zjChange: 0.3, rank: 10 },
+        { date: '08-19', change: 0.8, change20d: 5.1, limitUp: 1, volume: 480, zjChange: 0.5, rank: 8 },
+        { date: '08-20', change: -0.2, change20d: 4.8, limitUp: 0, volume: 450, zjChange: -0.1, rank: 14 },
+        { date: '08-21', change: 1.2, change20d: 6.5, limitUp: 2, volume: 560, zjChange: 0.9, rank: 5 },
+        { date: '08-22', change: 0.5, change20d: 7.2, limitUp: 1, volume: 520, zjChange: 0.3, rank: 8 },
+        { date: '08-25', change: 1.2, change20d: 8.5, limitUp: 2, volume: 680, zjChange: 0.9, rank: 5 },
+        { date: '08-26', change: 2.1, change20d: 10.2, limitUp: 4, volume: 890, zjChange: 1.8, rank: 2 },
+        { date: '08-27', change: 1.5, change20d: 11.2, limitUp: 3, volume: 820, zjChange: 1.2, rank: 4 },
+        { date: '08-28', change: 1.9, change20d: 12.3, limitUp: 3, volume: 860, zjChange: 1.5, rank: 3 }
+      ],
+      recommendation: '稳步走强，政策催化持续，可加仓'
+    },
+    {
+      id: 'fintech',
+      name: '金融科技',
+      industry: '金融/计算机应用',
+      zhongjun: '恒生电子',
+      status: 'watch',
+      trend: 'flat',
+      streak: 0,
+      streakType: 'flat',
+      change20d: 3.2,
+      dailyData: [
+        { date: '08-15', change: 1.2, change20d: 6.8, limitUp: 2, volume: 520, zjChange: 0.9, rank: 4 },
+        { date: '08-18', change: 0.5, change20d: 7.2, limitUp: 1, volume: 480, zjChange: 0.3, rank: 7 },
+        { date: '08-19', change: -0.8, change20d: 6.1, limitUp: 0, volume: 420, zjChange: -0.5, rank: 15 },
+        { date: '08-20', change: 1.5, change20d: 7.5, limitUp: 2, volume: 560, zjChange: 1.1, rank: 3 },
+        { date: '08-21', change: -1.2, change20d: 5.8, limitUp: 1, volume: 490, zjChange: -0.8, rank: 18 },
+        { date: '08-22', change: 0.8, change20d: 6.5, limitUp: 1, volume: 420, zjChange: 0.5, rank: 6 },
+        { date: '08-25', change: -0.3, change20d: 5.8, limitUp: 0, volume: 380, zjChange: -0.2, rank: 12 },
+        { date: '08-26', change: 1.5, change20d: 7.1, limitUp: 2, volume: 560, zjChange: 1.1, rank: 4 },
+        { date: '08-27', change: -0.8, change20d: 5.9, limitUp: 1, volume: 480, zjChange: -0.5, rank: 15 },
+        { date: '08-28', change: -0.5, change20d: 5.2, limitUp: 1, volume: 450, zjChange: -0.8, rank: 18 }
+      ],
+      recommendation: '涨跌交替，中军跌破5日线，降级观察'
+    },
+    {
+      id: 'data',
+      name: '数据要素',
+      industry: '科技/计算机应用',
+      zhongjun: '易华录',
+      status: 'try',
+      trend: 'up',
+      streak: 2,
+      streakType: 'up',
+      change20d: 9.8,
+      dailyData: [
+        { date: '08-15', change: -0.5, change20d: 1.2, limitUp: 0, volume: 120, zjChange: -0.3, rank: 18 },
+        { date: '08-18', change: 0.2, change20d: 1.5, limitUp: 0, volume: 130, zjChange: 0.1, rank: 16 },
+        { date: '08-19', change: 0.5, change20d: 2.2, limitUp: 0, volume: 150, zjChange: 0.3, rank: 14 },
+        { date: '08-20', change: -0.2, change20d: 1.8, limitUp: 0, volume: 140, zjChange: -0.1, rank: 17 },
+        { date: '08-21', change: 0.8, change20d: 2.8, limitUp: 1, volume: 180, zjChange: 0.5, rank: 10 },
+        { date: '08-22', change: 0.3, change20d: 3.2, limitUp: 0, volume: 180, zjChange: 0.1, rank: 15 },
+        { date: '08-25', change: 0.8, change20d: 4.5, limitUp: 1, volume: 250, zjChange: 0.5, rank: 9 },
+        { date: '08-26', change: 2.2, change20d: 6.8, limitUp: 3, volume: 480, zjChange: 1.8, rank: 3 },
+        { date: '08-27', change: 3.5, change20d: 9.2, limitUp: 5, volume: 620, zjChange: 2.9, rank: 2 },
+        { date: '08-28', change: 2.1, change20d: 10.8, limitUp: 4, volume: 580, zjChange: 1.6, rank: 4 }
+      ],
+      recommendation: '政策刺激连续走强，替补观察中，可小仓试错'
+    },
+    {
+      id: 'lowair',
+      name: '低空经济',
+      industry: '制造/航空装备',
+      zhongjun: '中信海直',
+      status: 'watch',
+      trend: 'flat',
+      streak: 0,
+      streakType: 'flat',
+      change20d: 5.6,
+      dailyData: [
+        { date: '08-15', change: 0.8, change20d: 2.5, limitUp: 1, volume: 180, zjChange: 0.5, rank: 8 },
+        { date: '08-18', change: -0.5, change20d: 1.8, limitUp: 0, volume: 160, zjChange: -0.3, rank: 16 },
+        { date: '08-19', change: 1.2, change20d: 3.2, limitUp: 1, volume: 220, zjChange: 0.8, rank: 6 },
+        { date: '08-20', change: -0.8, change20d: 2.5, limitUp: 0, volume: 200, zjChange: -0.5, rank: 17 },
+        { date: '08-21', change: 1.5, change20d: 4.2, limitUp: 2, volume: 280, zjChange: 1.0, rank: 5 },
+        { date: '08-22', change: -0.5, change20d: 3.8, limitUp: 0, volume: 150, zjChange: -0.3, rank: 18 },
+        { date: '08-25', change: 1.8, change20d: 5.5, limitUp: 2, volume: 320, zjChange: 1.2, rank: 5 },
+        { date: '08-26', change: -0.2, change20d: 5.2, limitUp: 1, volume: 280, zjChange: -0.1, rank: 14 },
+        { date: '08-27', change: 2.5, change20d: 7.2, limitUp: 3, volume: 410, zjChange: 2.0, rank: 3 },
+        { date: '08-28', change: 0.8, change20d: 7.8, limitUp: 1, volume: 350, zjChange: 0.5, rank: 10 }
+      ],
+      recommendation: '标准落地刺激但持续性待验证，震荡观察'
+    },
+    {
+      id: 'storage',
+      name: '存储芯片',
+      industry: '科技/半导体',
+      zhongjun: '兆易创新',
+      status: 'reduce',
+      trend: 'down',
+      streak: 2,
+      streakType: 'down',
+      change20d: -4.2,
+      dailyData: [
+        { date: '08-15', change: 2.1, change20d: 8.5, limitUp: 3, volume: 520, zjChange: 1.5, rank: 2 },
+        { date: '08-18', change: 1.2, change20d: 9.2, limitUp: 2, volume: 480, zjChange: 0.8, rank: 4 },
+        { date: '08-19', change: 0.5, change20d: 8.8, limitUp: 1, volume: 420, zjChange: 0.3, rank: 8 },
+        { date: '08-20', change: -0.5, change20d: 7.5, limitUp: 1, volume: 400, zjChange: -0.3, rank: 14 },
+        { date: '08-21', change: -1.2, change20d: 5.8, limitUp: 0, volume: 380, zjChange: -0.8, rank: 18 },
+        { date: '08-22', change: 1.5, change20d: 6.5, limitUp: 2, volume: 380, zjChange: 1.1, rank: 4 },
+        { date: '08-25', change: 0.2, change20d: 5.8, limitUp: 1, volume: 320, zjChange: 0.1, rank: 12 },
+        { date: '08-26', change: -0.8, change20d: 4.2, limitUp: 0, volume: 290, zjChange: -0.5, rank: 16 },
+        { date: '08-27', change: -1.2, change20d: 2.5, limitUp: 0, volume: 260, zjChange: -0.9, rank: 19 },
+        { date: '08-28', change: -1.5, change20d: 0.8, limitUp: 0, volume: 240, zjChange: -1.2, rank: 21 }
+      ],
+      recommendation: '连续走弱，涨停数归零，中军破位，建议减仓'
+    }
+  ],
+  historyRecords: [
+    {
+      date: '08-28',
+      weekday: '周四',
+      marketIndex: '+0.8%',
+      marketVolume: '8500亿',
+      marketSentiment: '偏暖',
+      goldPoolSummary: 'AI算力+2.8%领涨，机器人+1.9%，金融科技-0.5%',
+      zhongjunSummary: '寒武纪+3.2%创新高，埃斯顿+1.5%，恒生电子-0.8%破5日线',
+      limitUpCount: 12,
+      limitDownCount: 3,
+      conclusion: 'AI算力续强维持高优先级，金融科技降级观察，数据要素连续走强纳入替补',
+      actions: ['加仓AI算力至20%', '金融科技减仓至5%', '数据要素小仓试仓3%'],
+      riskNote: '无重大风险'
+    },
+    {
+      date: '08-27',
+      weekday: '周三',
+      marketIndex: '+0.3%',
+      marketVolume: '7800亿',
+      marketSentiment: '中性偏暖',
+      goldPoolSummary: '数据要素+3.5%爆发，AI算力+1.8%，机器人+1.5%',
+      zhongjunSummary: '寒武纪+1.5%，埃斯顿+1.2%回踩10日线获支撑，恒生电子-0.5%',
+      limitUpCount: 9,
+      limitDownCount: 5,
+      conclusion: '数据要素政策刺激爆发纳入替补观察，金池三板块整体健康',
+      actions: ['数据要素纳入替补观察', '机器人持仓不动'],
+      riskNote: '金融科技连续走弱需警惕'
+    },
+    {
+      date: '08-26',
+      weekday: '周二',
+      marketIndex: '+1.2%',
+      marketVolume: '9200亿',
+      marketSentiment: '偏暖',
+      goldPoolSummary: 'AI算力+3.1%领涨两市，机器人+2.1%，金融科技+1.5%',
+      zhongjunSummary: '寒武纪+2.8%，埃斯顿+1.8%，恒生电子+1.1%',
+      limitUpCount: 15,
+      limitDownCount: 2,
+      conclusion: '金池三板块全线飘红，AI算力涨停梯队6只完整，确认本周主攻方向',
+      actions: ['AI算力加仓至15%', '机器人加仓至10%'],
+      riskNote: '房地产龙头跌停确认避雷'
+    },
+    {
+      date: '08-25',
+      weekday: '周一',
+      marketIndex: '+0.5%',
+      marketVolume: '7500亿',
+      marketSentiment: '中性',
+      goldPoolSummary: 'AI算力+2.5%，机器人+1.2%，金融科技-0.3%',
+      zhongjunSummary: '寒武纪+2.1%，埃斯顿+0.9%，恒生电子-0.2%',
+      limitUpCount: 8,
+      limitDownCount: 4,
+      conclusion: '周初确认金池方向，AI算力和机器人开局良好，金融科技偏弱观察',
+      actions: ['建立AI算力底仓10%', '建立机器人底仓8%'],
+      riskNote: '白酒板块竞价核按钮全周规避'
+    },
+    {
+      date: '08-22',
+      weekday: '周五',
+      marketIndex: '-0.3%',
+      marketVolume: '7200亿',
+      marketSentiment: '中性偏冷',
+      goldPoolSummary: 'AI算力+1.2%，机器人+0.5%，金融科技+0.8%',
+      zhongjunSummary: '寒武纪+0.8%，埃斯顿+0.3%，恒生电子+0.5%',
+      limitUpCount: 6,
+      limitDownCount: 6,
+      conclusion: '周五强制清零复盘，AI算力和机器人入选下周金池，金融科技低位企稳入选观察',
+      actions: ['清仓上周旧金池', '制定下周作战计划'],
+      riskNote: '存储芯片连续走弱剔除金池'
+    },
+    {
+      date: '08-21',
+      weekday: '周四',
+      marketIndex: '+0.6%',
+      marketVolume: '7800亿',
+      marketSentiment: '偏暖',
+      goldPoolSummary: 'AI算力+1.8%，存储芯片-1.2%走弱，机器人+1.2%',
+      zhongjunSummary: '寒武纪+1.5%，兆易创新-0.8%，埃斯顿+0.9%',
+      limitUpCount: 10,
+      limitDownCount: 4,
+      conclusion: 'AI算力持续走强确认，存储芯片连续走弱降级，机器人稳步上行',
+      actions: ['存储芯片减仓至5%', 'AI算力加仓至12%'],
+      riskNote: '存储芯片中军破位需警惕'
+    },
+    {
+      date: '08-20',
+      weekday: '周三',
+      marketIndex: '-0.5%',
+      marketVolume: '7100亿',
+      marketSentiment: '偏冷',
+      goldPoolSummary: 'AI算力-0.3%回调，存储芯片-0.5%，金融科技+1.5%',
+      zhongjunSummary: '寒武纪-0.2%，兆易创新-0.3%，恒生电子+1.1%',
+      limitUpCount: 5,
+      limitDownCount: 8,
+      conclusion: '大盘调整日，AI算力小幅回调但中军未破5日线判定为上涨中继，金融科技逆势走强',
+      actions: ['AI算力持仓不动', '金融科技纳入观察'],
+      riskNote: '大盘调整期控制仓位'
+    },
+    {
+      date: '08-19',
+      weekday: '周二',
+      marketIndex: '+0.9%',
+      marketVolume: '8200亿',
+      marketSentiment: '偏暖',
+      goldPoolSummary: 'AI算力+1.5%，存储芯片+0.5%，机器人+0.8%',
+      zhongjunSummary: '寒武纪+1.2%，兆易创新+0.3%，埃斯顿+0.5%',
+      limitUpCount: 11,
+      limitDownCount: 3,
+      conclusion: 'AI算力连续3日走强确认主攻方向，存储芯片涨势放缓开始观察',
+      actions: ['AI算力加仓至10%'],
+      riskNote: '无重大风险'
+    },
+    {
+      date: '08-18',
+      weekday: '周一',
+      marketIndex: '+0.4%',
+      marketVolume: '7300亿',
+      marketSentiment: '中性',
+      goldPoolSummary: 'AI算力+0.8%，存储芯片+1.2%，机器人+0.5%',
+      zhongjunSummary: '寒武纪+0.6%，兆易创新+0.8%，埃斯顿+0.3%',
+      limitUpCount: 7,
+      limitDownCount: 5,
+      conclusion: '周初金池三板块均收红，存储芯片开局最强，AI算力稳步上行',
+      actions: ['建立存储芯片底仓8%', '建立AI算力底仓8%'],
+      riskNote: '无重大风险'
+    },
+    {
+      date: '08-15',
+      weekday: '周五',
+      marketIndex: '-0.2%',
+      marketVolume: '6800亿',
+      marketSentiment: '中性偏冷',
+      goldPoolSummary: '存储芯片+2.1%领涨，AI算力+0.5%，机器人+0.2%',
+      zhongjunSummary: '兆易创新+1.5%，寒武纪+0.3%，埃斯顿+0.1%',
+      limitUpCount: 8,
+      limitDownCount: 5,
+      conclusion: '周五清零复盘，存储芯片周涨幅第一入选下周金池，AI算力和机器人同步入选',
+      actions: ['清仓旧金池', '制定下周计划：存储芯片+AI算力+机器人'],
+      riskNote: '房地产和白酒确认进入黑池'
+    }
+  ],
+  leaderFilter: 'all',
+  expandedLeaders: {},
+  leaderStocks: [
+    {
+      sector: 'AI算力',
+      leaders: [
+        {
+          rank: 1,
+          name: '寒武纪',
+          code: '688256',
+          type: '中军',
+          marketCap: '1280亿',
+          dayChange: '+3.2%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '85亿',
+          weekChange: '+12.5%',
+          reason: 'AI算力板块市值最大、成交额最高的大市值中军，周线多头排列，是板块的定海神针，只要寒武纪不倒，AI算力逻辑就在',
+          logic: 'AI大模型训练需求爆发，国产算力替代加速，公司作为国内AI芯片龙头直接受益，思元系列芯片量产交付',
+          catalysts: ['国产AI芯片量产', '大模型训练需求爆发', '政策支持自主可控', '算力基础设施建设'],
+          risk: '估值偏高（PE超200倍），业绩兑现压力大，需关注美国芯片制裁升级风险'
+        },
+        {
+          rank: 2,
+          name: '鸿博股份',
+          code: '002229',
+          type: '连板先锋',
+          marketCap: '185亿',
+          dayChange: '+10.0%',
+          isLimitUp: true,
+          boardCount: 4,
+          volume: '32亿',
+          weekChange: '+46.8%',
+          reason: 'AI算力板块连板高度最高的情绪标，4连板引领板块情绪，竞价高开5.2%，分时承接强，是短线资金的主攻方向',
+          logic: '公司与英伟达合作建设AI智算中心，算力租赁业务放量，叠加AI应用爆发预期，成为市场情绪标杆',
+          catalysts: ['英伟达合作深化', '算力租赁业务放量', 'AI应用爆发预期', '短线资金抱团'],
+          risk: '连板高度已高，随时可能断板回调，业绩支撑不足，纯情绪炒作需快进快出'
+        },
+        {
+          rank: 3,
+          name: '浪潮信息',
+          code: '000977',
+          type: '低位补涨',
+          marketCap: '620亿',
+          dayChange: '+2.1%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '28亿',
+          weekChange: '+8.3%',
+          reason: 'AI服务器龙头，低位企稳后开始补涨，周线多头排列，日线回踩10日线获支撑，是中军之外的稳健选择',
+          logic: '国内AI服务器市占率第一，受益于AI算力建设大潮，服务器出货量持续增长，估值相对合理',
+          catalysts: ['AI服务器出货增长', '市占率持续提升', '估值相对合理', '国企改革预期'],
+          risk: '增长预期已部分反映在股价中，需关注服务器价格战和毛利率下滑风险'
+        }
+      ]
+    },
+    {
+      sector: '机器人',
+      leaders: [
+        {
+          rank: 1,
+          name: '埃斯顿',
+          code: '002747',
+          type: '中军',
+          marketCap: '285亿',
+          dayChange: '+1.5%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '12亿',
+          weekChange: '+7.8%',
+          reason: '工业机器人龙头，国产工业机器人市占率第一，周线连阳趋势稳健，是机器人板块的中军锚，中军不坏板块逻辑就在',
+          logic: '人口老龄化推动工业机器人替代，国产替代加速，公司全产业链布局（核心零部件+本体+集成），受益于制造业自动化升级',
+          catalysts: ['工业机器人国产替代', '制造业自动化升级', '人口老龄化驱动', '核心零部件自研突破'],
+          risk: '制造业投资周期下行可能影响需求，需关注毛利率和应收账款风险'
+        },
+        {
+          rank: 2,
+          name: '中大力德',
+          code: '002896',
+          type: '连板先锋',
+          marketCap: '68亿',
+          dayChange: '+10.0%',
+          isLimitUp: true,
+          boardCount: 3,
+          volume: '8.5亿',
+          weekChange: '+33.2%',
+          reason: '机器人板块连板高度最高的情绪标，3连板，减速器核心标的，竞价高开3.8%，回踩均线有承接，是短线资金主攻方向',
+          logic: '公司是国内精密减速器龙头，RV减速器和行星减速器技术领先，人形机器人爆发带动减速器需求激增',
+          catalysts: ['人形机器人爆发', '减速器需求激增', '技术领先优势', '短线资金抱团'],
+          risk: '连板高度已高，随时可能断板，人形机器人量产进度不及预期，估值偏高'
+        },
+        {
+          rank: 3,
+          name: '新时达',
+          code: '002527',
+          type: '低位补涨',
+          marketCap: '62亿',
+          dayChange: '+5.6%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '5.2亿',
+          weekChange: '+12.5%',
+          reason: '机器人板块低位补涨标的，小市值弹性大，放量异动开始启动，是中军大涨后的补涨套利选择',
+          logic: '公司业务覆盖工业机器人、运动控制、电梯控制三大领域，机器人业务占比提升，受益于行业景气度回升',
+          catalysts: ['机器人业务占比提升', '小市值弹性大', '低位放量启动', '行业景气度回升'],
+          risk: '业绩波动较大，机器人业务竞争力不如龙头，持续性需验证'
+        }
+      ]
+    },
+    {
+      sector: '金融科技',
+      leaders: [
+        {
+          rank: 1,
+          name: '恒生电子',
+          code: '600570',
+          type: '中军',
+          marketCap: '545亿',
+          dayChange: '-0.8%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '9.8亿',
+          weekChange: '-1.2%',
+          reason: '金融IT绝对龙头，证券IT市占率超50%，是金融科技板块的中军锚，但近期跌破5日线需警惕，中军若破位板块进入退潮',
+          logic: '资本市场改革深化（注册制、北交所、衍生品扩容）带动金融IT需求，公司作为龙头直接受益，AI+金融应用布局领先',
+          catalysts: ['资本市场改革深化', '金融IT需求增长', 'AI+金融应用', '市占率绝对领先'],
+          risk: '近期跌破5日线，短期趋势走弱，需警惕中军破位风险，金融IT投入周期可能受券商盈利影响'
+        },
+        {
+          rank: 2,
+          name: '同花顺',
+          code: '300033',
+          type: '趋势龙头',
+          marketCap: '820亿',
+          dayChange: '+1.2%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '15亿',
+          weekChange: '+5.6%',
+          reason: '互联网金融信息服务龙头，C端用户基数大，AI投顾产品放量，趋势稳健，是金融科技板块的趋势核心标的',
+          logic: 'AI大模型赋能投顾业务，i问财等AI产品用户增长，叠加资本市场活跃度提升，公司业绩弹性大',
+          catalysts: ['AI投顾产品放量', 'C端用户基数大', '资本市场活跃度提升', '业绩弹性大'],
+          risk: '依赖资本市场活跃度，熊市业绩下滑明显，AI产品商业化进度需验证'
+        },
+        {
+          rank: 3,
+          name: '赢时胜',
+          code: '300377',
+          type: '低位补涨',
+          marketCap: '78亿',
+          dayChange: '+2.5%',
+          isLimitUp: false,
+          boardCount: 0,
+          volume: '3.2亿',
+          weekChange: '+6.8%',
+          reason: '金融科技板块低位补涨标的，资管IT龙头，缩量企稳后开始放量，小市值弹性大，是中军大涨后的补涨选择',
+          logic: '公司是资管IT龙头，服务公募基金、银行理财等机构客户，大资管行业发展带动IT投入，AI+资管应用有想象空间',
+          catalysts: ['大资管行业发展', '资管IT需求增长', 'AI+资管应用', '低位缩量企稳'],
+          risk: '业绩波动较大，客户集中度高，金融IT投入周期可能受影响'
+        }
+      ]
+    }
+  ]
+};
+
+// ===== 路由（hash） =====
+function navigate(route) {
+  state.currentRoute = route;
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.route === route);
+  });
+  document.querySelectorAll('.view').forEach(v => {
+    v.classList.toggle('active', v.id === 'view-' + route);
+  });
+  if (route === 'dashboard') renderDashboard();
+  if (route === 'weekly') renderWeekly();
+  if (route === 'daily') renderDaily();
+  if (route === 'tracking') renderTracking();
+  if (route === 'history') renderHistory();
+  if (route === 'leaders') renderLeaderStocks();
+  if (route === 'stock') renderStock();
+  if (route === 'checklist') renderChecklist();
+}
+
+function handleHashChange() {
+  const hash = location.hash.replace('#', '') || 'dashboard';
+  const validRoutes = ['dashboard', 'weekly', 'daily', 'tracking', 'history', 'leaders', 'stock', 'checklist'];
+  navigate(validRoutes.includes(hash) ? hash : 'dashboard');
+}
+
+window.addEventListener('hashchange', handleHashChange);
+handleHashChange();
+
+// ===== Tab 切换 =====
+function initTabs(container) {
+  const tabs = container.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const parent = tab.closest('.view');
+      parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      parent.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      const target = parent.querySelector('#tab-' + tab.dataset.tab);
+      if (target) target.style.display = 'block';
+    });
+  });
+}
+
+// ===== 渲染：总览仪表盘 =====
+function renderDashboard() {
+  // 金池
+  const goldEl = document.getElementById('dash-gold-pool');
+  goldEl.innerHTML = state.goldPool.map(s => `
+    <div class="data-row">
+      <span class="label">${s.name}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="value" style="color:var(--up-red);">${s.weekChange}</span>
+        ${statusBadge(s.status)}
+      </span>
+    </div>
+  `).join('');
+
+  // 黑池
+  const blackEl = document.getElementById('dash-black-pool');
+  blackEl.innerHTML = state.blackPool.map(s => `
+    <div class="data-row">
+      <span class="label">${s.name}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <span class="value" style="color:var(--down-green);">${s.weekChange}</span>
+        <span class="badge badge-down"><span class="dot"></span>避雷</span>
+      </span>
+    </div>
+  `).join('');
+
+  // 中军
+  const zjEl = document.getElementById('dash-zhongjun');
+  zjEl.innerHTML = state.zhongjun.map(z => `
+    <div class="sector-card" style="cursor:default;">
+      <div class="sector-name">
+        ${z.name}
+        <span class="badge ${z.health === 'good' ? 'badge-up' : 'badge-warn'}">${z.health === 'good' ? '健康' : '预警'}</span>
+      </div>
+      <div class="sector-meta">
+        <div class="meta-item">
+          <span class="meta-label">所属板块</span>
+          <span class="meta-value">${z.sector}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">今日</span>
+          <span class="meta-value" style="color:${z.dayChange.startsWith('+') ? 'var(--up-red)' : 'var(--down-green)'}">${z.dayChange}</span>
+        </div>
+      </div>
+      <div class="zhongjun-block">
+        <div class="ma-indicators">
+          <span class="ma-tag ${z.ma5}">MA5 ${z.ma5 === 'above' ? '上方' : '下方'}</span>
+          <span class="ma-tag ${z.ma10}">MA10 ${z.ma10 === 'above' ? '上方' : '下方'}</span>
+          <span class="ma-tag ${z.ma20}">MA20 ${z.ma20 === 'above' ? '上方' : '下方'}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // 时间线
+  const tlEl = document.getElementById('dash-timeline');
+  tlEl.innerHTML = state.timeline.map(t => `
+    <div class="timeline-item ${t.type}">
+      <div class="timeline-date">${t.date}</div>
+      <div class="timeline-content">${t.content}</div>
+    </div>
+  `).join('');
+}
+
+function statusBadge(status) {
+  const map = {
+    keep: '<span class="badge badge-up"><span class="dot"></span>维持</span>',
+    reduce: '<span class="badge badge-warn"><span class="dot"></span>减仓</span>',
+    remove: '<span class="badge badge-down"><span class="dot"></span>剔除</span>',
+    watch: '<span class="badge badge-blue"><span class="dot"></span>观察</span>',
+    try: '<span class="badge badge-gold"><span class="dot"></span>试仓</span>'
+  };
+  return map[status] || '';
+}
+
+// ===== 渲染：周度基准锚 =====
+function renderWeekly() {
+  // 金池卡片
+  document.getElementById('weekly-gold-cards').innerHTML = state.goldPool.map(s => `
+    <div class="sector-card gold-pool">
+      <div class="sector-name">
+        ${s.name}
+        ${statusBadge(s.status)}
+      </div>
+      <div class="sector-meta">
+        <div class="meta-item">
+          <span class="meta-label">周涨幅</span>
+          <span class="meta-value" style="color:var(--up-red);">${s.weekChange}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">周成交额(亿)</span>
+          <span class="meta-value">${s.weekVolume}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">周线形态</span>
+          <span class="meta-value" style="font-size:11px;">${s.pattern}</span>
+        </div>
+      </div>
+      <div class="zhongjun-block">
+        <div class="zj-name">中军：${s.zhongjun}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${s.reason}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // 金池表格
+  document.getElementById('weekly-gold-table').innerHTML = state.goldPool.map(s => `
+    <tr>
+      <td style="font-weight:600;">${s.name}</td>
+      <td style="color:var(--up-red);font-weight:600;">${s.weekChange}</td>
+      <td>${s.weekVolume}</td>
+      <td><span class="badge badge-up">${s.pattern}</span></td>
+      <td style="color:var(--text-secondary);font-size:12px;">${s.reason}</td>
+    </tr>
+  `).join('');
+
+  // 黑池卡片
+  document.getElementById('weekly-black-cards').innerHTML = state.blackPool.map(s => `
+    <div class="sector-card black-pool">
+      <div class="sector-name">
+        ${s.name}
+        <span class="badge badge-down"><span class="dot"></span>避雷</span>
+      </div>
+      <div class="sector-meta">
+        <div class="meta-item">
+          <span class="meta-label">周跌幅</span>
+          <span class="meta-value" style="color:var(--down-green);">${s.weekChange}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">周线状态</span>
+          <span class="meta-value" style="font-size:11px;">${s.lineStatus}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">量能</span>
+          <span class="meta-value">${s.volume}</span>
+        </div>
+      </div>
+      <div class="zhongjun-block" style="border-top-color:var(--border);">
+        <div style="font-size:11px;color:var(--text-muted);">${s.reason}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // 黑池表格
+  document.getElementById('weekly-black-table').innerHTML = state.blackPool.map(s => `
+    <tr>
+      <td style="font-weight:600;">${s.name}</td>
+      <td style="color:var(--down-green);font-weight:600;">${s.weekChange}</td>
+      <td><span class="badge badge-down">${s.lineStatus}</span></td>
+      <td>${s.volume}</td>
+      <td style="color:var(--text-secondary);font-size:12px;">${s.reason}</td>
+    </tr>
+  `).join('');
+
+  // 中军卡片
+  document.getElementById('weekly-zj-cards').innerHTML = state.zhongjun.map(z => `
+    <div class="sector-card" style="cursor:default;border-left:3px solid var(--accent-gold);">
+      <div class="sector-name">
+        ${z.name}
+        <span class="badge ${z.health === 'good' ? 'badge-up' : 'badge-warn'}">${z.health === 'good' ? '趋势健康' : '注意预警'}</span>
+      </div>
+      <div class="sector-meta">
+        <div class="meta-item">
+          <span class="meta-label">代码</span>
+          <span class="meta-value">${z.code}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">所属板块</span>
+          <span class="meta-value">${z.sector}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">现价</span>
+          <span class="meta-value">${z.price}</span>
+        </div>
+      </div>
+      <div class="zhongjun-block">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">${z.weekTrend}</div>
+        <div class="ma-indicators">
+          <span class="ma-tag ${z.ma5}">5日线${z.ma5 === 'above' ? '上方' : '下方'}</span>
+          <span class="ma-tag ${z.ma10}">10日线${z.ma10 === 'above' ? '上方' : '下方'}</span>
+          <span class="ma-tag ${z.ma20}">20日线${z.ma20 === 'above' ? '上方' : '下方'}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== 渲染：每日复盘 =====
+function renderDaily() {
+  // 强势验证表格
+  document.getElementById('daily-verify-table').innerHTML = state.dailyVerify.map((v, i) => `
+    <tr>
+      <td style="font-weight:600;">${v.sector}</td>
+      <td style="color:${v.dayChange.startsWith('+') ? 'var(--up-red)' : 'var(--down-green)'};font-weight:600;">${v.dayChange}</td>
+      <td>${v.limitUp} 只</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${v.zjStatus}</td>
+      <td>${v.loseDays > 0 ? '<span style="color:var(--warning-orange);font-weight:600;">' + v.loseDays + '天</span>' : '<span style="color:var(--text-muted);">0天</span>'}</td>
+      <td>${statusBadge(v.verdict)}</td>
+      <td>
+        <div class="status-selector">
+          <button class="status-btn ${v.verdict === 'keep' ? 'active-keep' : ''}" onclick="setVerifyStatus(${i}, 'keep')">维持</button>
+          <button class="status-btn ${v.verdict === 'reduce' ? 'active-reduce' : ''}" onclick="setVerifyStatus(${i}, 'reduce')">减仓</button>
+          <button class="status-btn ${v.verdict === 'remove' ? 'active-remove' : ''}" onclick="setVerifyStatus(${i}, 'remove')">剔除</button>
+          <button class="status-btn ${v.verdict === 'watch' ? 'active-watch' : ''}" onclick="setVerifyStatus(${i}, 'watch')">观察</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // 挑战者列表
+  document.getElementById('daily-challenger-list').innerHTML = state.challengers.map(c => {
+    const dots = Array.from({length: c.target}, (_, i) => `<span class="day-dot ${i < c.days ? 'lit' : ''}"></span>`).join('');
+    const progress = Math.round(c.days / c.target * 100);
+    return `
+      <div class="challenger-card">
+        <div class="challenger-info">
+          <div class="challenger-name">${c.name} <span class="badge badge-blue" style="margin-left:6px;">替补观察</span></div>
+          <div class="challenger-reason">${c.reason}</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="challenger-days">${dots}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${c.days}/${c.target}天 · ${progress}%</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // 避雷表格
+  document.getElementById('daily-avoid-table').innerHTML = state.dailyAvoid.map(a => `
+    <tr>
+      <td style="font-weight:600;">${a.sector}</td>
+      <td style="color:${a.dayChange.startsWith('+') ? 'var(--up-red)' : 'var(--down-green)'};font-weight:600;">${a.dayChange}</td>
+      <td style="font-size:12px;">${a.leader}</td>
+      <td>${a.volume}</td>
+      <td><span class="badge ${a.result === '确认避雷' ? 'badge-down' : 'badge-warn'}">${a.result}</span></td>
+    </tr>
+  `).join('');
+}
+
+function setVerifyStatus(index, status) {
+  state.dailyVerify[index].verdict = status;
+  const textMap = { keep: '维持', reduce: '减仓', remove: '剔除', watch: '观察', try: '试仓' };
+  state.dailyVerify[index].verdictText = textMap[status];
+  renderDaily();
+}
+
+// ===== 渲染：个股选择 =====
+function renderStock() {
+  // 激进型
+  document.getElementById('stock-aggressive-table').innerHTML = state.stockAggressive.map(s => `
+    <tr>
+      <td><span class="stock-name">${s.name}</span><span class="stock-code">${s.code}</span></td>
+      <td><span class="badge badge-gold">${s.sector}</span></td>
+      <td style="color:var(--up-red);font-weight:700;">${s.boards}</td>
+      <td style="color:var(--up-red);">${s.auction}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${s.support}</td>
+      <td><span class="badge ${s.emotion === '高' ? 'badge-up' : 'badge-warn'}">${s.emotion}</span></td>
+    </tr>
+  `).join('');
+
+  // 稳健型
+  document.getElementById('stock-steady-table').innerHTML = state.stockSteady.map(s => `
+    <tr>
+      <td><span class="stock-name">${s.name}</span><span class="stock-code">${s.code}</span></td>
+      <td><span class="badge badge-gold">${s.sector}</span></td>
+      <td><span class="badge badge-up">${s.weekAlign}</span></td>
+      <td style="font-weight:600;">${s.pullback}</td>
+      <td><span class="badge ${s.support === '支撑有效' ? 'badge-up' : 'badge-warn'}">${s.support}</span></td>
+      <td style="color:var(--accent-gold);font-weight:700;">${s.position}</td>
+    </tr>
+  `).join('');
+
+  // 补涨型
+  document.getElementById('stock-catchup-table').innerHTML = state.stockCatchup.map(s => `
+    <tr>
+      <td><span class="stock-name">${s.name}</span><span class="stock-code">${s.code}</span></td>
+      <td><span class="badge badge-gold">${s.sector}</span></td>
+      <td>${s.cap}</td>
+      <td><span class="badge badge-blue">${s.position}</span></td>
+      <td style="font-size:12px;">${s.volume}</td>
+      <td><span class="badge ${s.space === '中高' ? 'badge-up' : s.space === '中' ? 'badge-warn' : 'badge-muted'}">${s.space}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ===== 渲染：板块跟踪 =====
+function renderTracking() {
+  const list = state.sectorTracking;
+
+  // 统计
+  const upCount = list.filter(s => s.trend === 'up').length;
+  const downCount = list.filter(s => s.trend === 'down').length;
+  const flatCount = list.filter(s => s.trend === 'flat').length;
+  document.getElementById('track-up-count').textContent = upCount;
+  document.getElementById('track-down-count').textContent = downCount;
+  document.getElementById('track-flat-count').textContent = flatCount;
+
+  // 筛选按钮状态
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === state.trackFilter);
+  });
+
+  // 过滤
+  const filtered = state.trackFilter === 'all'
+    ? list
+    : list.filter(s => s.trend === state.trackFilter);
+
+  // 渲染表格
+  const tbody = document.getElementById('tracking-tbody');
+  tbody.innerHTML = filtered.map(s => {
+    const isExpanded = state.expandedTrackRows[s.id];
+    const last3 = s.dailyData.slice(-3);
+    const cum3 = last3.reduce((sum, d) => sum + d.change, 0);
+    const cum3Str = (cum3 >= 0 ? '+' : '') + cum3.toFixed(1) + '%';
+    const today = s.dailyData[s.dailyData.length - 1];
+    const prev = s.dailyData[s.dailyData.length - 2];
+    const limitChange = today.limitUp - prev.limitUp;
+    const limitStr = today.limitUp + '只' + (limitChange > 0 ? ' ↑' + limitChange : limitChange < 0 ? ' ↓' + Math.abs(limitChange) : '');
+    const zjStr = (today.zjChange >= 0 ? '+' : '') + today.zjChange.toFixed(1) + '%';
+
+    // 迷你趋势图
+    const maxAbs = Math.max(...s.dailyData.map(d => Math.abs(d.change)), 1);
+    const sparkline = s.dailyData.map(d => {
+      const h = Math.max(4, Math.round(Math.abs(d.change) / maxAbs * 28));
+      const cls = d.change >= 0 ? 'up' : 'down';
+      const tip = d.date + ': ' + (d.change >= 0 ? '+' : '') + d.change.toFixed(1) + '%';
+      return `<div class="bar ${cls}" style="height:${h}px;"><span class="bar-tip">${tip}</span></div>`;
+    }).join('');
+
+    // 连续天数标签
+    let streakHtml = '';
+    if (s.streak > 0) {
+      const streakCls = s.streakType === 'up' ? 'up' : 'down';
+      const streakText = (s.streakType === 'up' ? '走强' : '走弱') + s.streak + '天';
+      streakHtml = `<span class="streak-tag ${streakCls}">${streakText}</span>`;
+    } else {
+      streakHtml = `<span class="streak-tag flat">震荡</span>`;
+    }
+
+    // 趋势判定
+    const trendMap = {
+      up: '<span class="trend-indicator up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>走强</span>',
+      down: '<span class="trend-indicator down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>走弱</span>',
+      flat: '<span class="trend-indicator flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>震荡</span>'
+    };
+
+    // 详情行
+    const detailDates = s.dailyData.map(d => `<th>${d.date}</th>`).join('');
+    const detailChanges = s.dailyData.map(d => {
+      const color = d.change >= 0 ? 'var(--up-red)' : 'var(--down-green)';
+      return `<td style="color:${color};font-weight:600;">${(d.change >= 0 ? '+' : '') + d.change.toFixed(1)}%</td>`;
+    }).join('');
+    const detailLimits = s.dailyData.map(d => `<td>${d.limitUp}只</td>`).join('');
+    const detailVolumes = s.dailyData.map(d => `<td>${d.volume}亿</td>`).join('');
+    const detail20d = s.dailyData.map(d => {
+      const color = d.change20d >= 0 ? 'var(--up-red)' : 'var(--down-green)';
+      return `<td style="color:${color};font-weight:600;">${(d.change20d >= 0 ? '+' : '') + d.change20d.toFixed(1)}%</td>`;
+    }).join('');
+    const detailZj = s.dailyData.map(d => {
+      const color = d.zjChange >= 0 ? 'var(--up-red)' : 'var(--down-green)';
+      return `<td style="color:${color};">${(d.zjChange >= 0 ? '+' : '') + d.zjChange.toFixed(1)}%</td>`;
+    }).join('');
+    const detailRanks = s.dailyData.map(d => `<td>第${d.rank}名</td>`).join('');
+
+    const detailRow = `
+      <tr class="tracking-detail-row ${isExpanded ? 'show' : ''}" id="detail-${s.id}">
+        <td colspan="11">
+          <div class="detail-grid">
+            <div>
+              <div class="detail-section-title">每日涨幅</div>
+              <table class="detail-table">
+                <thead><tr><th>指标</th>${detailDates}</tr></thead>
+                <tbody>
+                  <tr><td style="color:var(--text-secondary);">板块涨幅</td>${detailChanges}</tr>
+                  <tr><td style="color:var(--text-secondary);">20日涨幅</td>${detail20d}</tr>
+                  <tr><td style="color:var(--text-secondary);">涨停数</td>${detailLimits}</tr>
+                  <tr><td style="color:var(--text-secondary);">成交额</td>${detailVolumes}</tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div class="detail-section-title">中军与排名</div>
+              <table class="detail-table">
+                <thead><tr><th>指标</th>${detailDates}</tr></thead>
+                <tbody>
+                  <tr><td style="color:var(--text-secondary);">中军(${s.zhongjun})</td>${detailZj}</tr>
+                  <tr><td style="color:var(--text-secondary);">板块排名</td>${detailRanks}</tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+
+    return `
+      <tr>
+        <td>
+          <button class="expand-btn ${isExpanded ? 'expanded' : ''}" onclick="toggleTrackDetail('${s.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </td>
+        <td style="font-weight:600;">
+          ${s.name}
+          <div style="margin-top:3px;">${statusBadge(s.status)}</div>
+        </td>
+        <td style="font-size:12px;color:var(--text-secondary);">${s.industry}</td>
+        <td><div class="sparkline">${sparkline}</div></td>
+        <td style="color:${cum3 >= 0 ? 'var(--up-red)' : 'var(--down-green)'};font-weight:700;">${cum3Str}</td>
+        <td style="color:${s.change20d >= 0 ? 'var(--up-red)' : 'var(--down-green)'};font-weight:700;">${(s.change20d >= 0 ? '+' : '') + s.change20d.toFixed(1)}%</td>
+        <td style="font-size:12px;color:${limitChange >= 0 ? 'var(--up-red)' : 'var(--down-green)'};">${limitStr}</td>
+        <td style="color:${today.zjChange >= 0 ? 'var(--up-red)' : 'var(--down-green)'};font-weight:600;">${zjStr}</td>
+        <td>${streakHtml}</td>
+        <td>${trendMap[s.trend]}</td>
+        <td style="font-size:12px;color:var(--text-secondary);max-width:180px;line-height:1.4;">${s.recommendation}</td>
+      </tr>
+      ${detailRow}
+    `;
+  }).join('');
+}
+
+function setTrackFilter(filter) {
+  state.trackFilter = filter;
+  renderTracking();
+}
+
+function toggleTrackDetail(id) {
+  state.expandedTrackRows[id] = !state.expandedTrackRows[id];
+  renderTracking();
+}
+
+// ===== 渲染：历史记录 =====
+function renderHistory() {
+  const records = state.historyRecords;
+
+  // 统计
+  const totalDays = records.length;
+  const upDays = records.filter(r => r.marketIndex.startsWith('+')).length;
+  const avgLimit = Math.round(records.reduce((sum, r) => sum + r.limitUpCount, 0) / totalDays * 10) / 10;
+  const totalActions = records.reduce((sum, r) => sum + r.actions.length, 0);
+
+  document.getElementById('hist-total-days').textContent = totalDays;
+  document.getElementById('hist-up-days').textContent = upDays;
+  document.getElementById('hist-avg-limit').textContent = avgLimit;
+  document.getElementById('hist-actions').textContent = totalActions;
+
+  // 筛选按钮状态
+  document.querySelectorAll('[data-hist-filter]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.histFilter) === state.historyFilter);
+  });
+  document.querySelectorAll('[data-hist-sentiment]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.histSentiment === state.historySentiment);
+  });
+
+  // 过滤
+  let filtered = records.slice(0, state.historyFilter);
+  if (state.historySentiment !== 'all') {
+    filtered = filtered.filter(r => r.marketSentiment.includes(state.historySentiment));
+  }
+
+  // 渲染列表
+  const list = document.getElementById('history-list');
+  list.innerHTML = filtered.map((r, i) => {
+    const isExpanded = state.expandedHistoryRows[r.date];
+    const isUp = r.marketIndex.startsWith('+');
+    const sentimentBadge = r.marketSentiment.includes('偏暖')
+      ? '<span class="badge badge-up">偏暖</span>'
+      : r.marketSentiment.includes('偏冷')
+      ? '<span class="badge badge-down">偏冷</span>'
+      : '<span class="badge badge-blue">中性</span>';
+
+    const actionsHtml = r.actions.map(a => `<div style="padding:4px 0;border-bottom:1px solid var(--border-light);font-size:12px;"><span style="color:var(--accent-gold);margin-right:6px;">▸</span>${a}</div>`).join('');
+
+    return `
+      <div class="card" style="margin-bottom:10px;padding:0;overflow:hidden;">
+        <div style="padding:14px 18px;cursor:pointer;" onclick="toggleHistoryDetail('${r.date}')">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="font-size:15px;font-weight:700;min-width:90px;">${r.date} <span style="font-size:12px;color:var(--text-muted);font-weight:400;">${r.weekday}</span></div>
+            <div style="font-size:13px;font-weight:600;color:${isUp ? 'var(--up-red)' : 'var(--down-green)'};">大盘 ${r.marketIndex}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">成交 ${r.marketVolume}</div>
+            ${sentimentBadge}
+            <span class="badge badge-gold" style="margin-left:auto;">涨停 ${r.limitUpCount} / 跌停 ${r.limitDownCount}</span>
+            <button class="expand-btn ${isExpanded ? 'expanded' : ''}" style="margin-left:8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            <div><span style="color:var(--text-muted);">金池表现：</span>${r.goldPoolSummary}</div>
+            <div style="margin-top:4px;"><span style="color:var(--text-muted);">中军状态：</span>${r.zhongjunSummary}</div>
+          </div>
+        </div>
+        <div class="tracking-detail-row ${isExpanded ? 'show' : ''}" style="display:${isExpanded ? 'block' : 'none'};background:var(--bg-tertiary);border-top:1px solid var(--border);">
+          <div style="padding:14px 18px;">
+            <div class="detail-grid">
+              <div>
+                <div class="detail-section-title">复盘结论</div>
+                <div style="font-size:13px;color:var(--text-primary);line-height:1.7;padding:10px 12px;background:var(--bg-secondary);border-radius:6px;border-left:3px solid var(--accent-gold);">${r.conclusion}</div>
+                <div class="detail-section-title" style="margin-top:14px;">操作记录</div>
+                <div style="padding:4px 12px;background:var(--bg-secondary);border-radius:6px;">${actionsHtml}</div>
+              </div>
+              <div>
+                <div class="detail-section-title">市场情绪</div>
+                <div class="data-row"><span class="label">情绪等级</span><span class="value">${r.marketSentiment}</span></div>
+                <div class="data-row"><span class="label">涨停家数</span><span class="value" style="color:var(--up-red);">${r.limitUpCount} 家</span></div>
+                <div class="data-row"><span class="label">跌停家数</span><span class="value" style="color:var(--down-green);">${r.limitDownCount} 家</span></div>
+                <div class="data-row"><span class="label">成交额</span><span class="value">${r.marketVolume}</span></div>
+                <div class="detail-section-title" style="margin-top:14px;">风险提示</div>
+                <div style="font-size:12px;color:${r.riskNote === '无重大风险' ? 'var(--text-muted)' : 'var(--warning-orange)'};line-height:1.6;padding:8px 12px;background:var(--bg-secondary);border-radius:6px;">${r.riskNote}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">当前筛选条件下暂无历史记录</div>';
+  }
+}
+
+function setHistoryFilter(days) {
+  state.historyFilter = days;
+  renderHistory();
+}
+
+function setHistorySentiment(sentiment) {
+  state.historySentiment = sentiment;
+  renderHistory();
+}
+
+function toggleHistoryDetail(date) {
+  state.expandedHistoryRows[date] = !state.expandedHistoryRows[date];
+  renderHistory();
+}
+
+// ===== 渲染：龙头股池 =====
+function renderLeaderStocks() {
+  // 统计数据
+  const allLeaders = state.leaderStocks.flatMap(s => s.leaders);
+  document.getElementById('leader-total').textContent = allLeaders.length;
+  document.getElementById('leader-boards').textContent = allLeaders.filter(l => l.boardCount > 0).length;
+  document.getElementById('leader-zhongjun').textContent = allLeaders.filter(l => l.type === '中军').length;
+  document.getElementById('leader-limitup').textContent = allLeaders.filter(l => l.isLimitUp).length;
+
+  // 筛选按钮状态
+  document.querySelectorAll('[data-leader-filter]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.leaderFilter === state.leaderFilter);
+  });
+
+  // 过滤板块
+  const sectors = state.leaderFilter === 'all'
+    ? state.leaderStocks
+    : state.leaderStocks.filter(s => s.sector === state.leaderFilter);
+
+  const container = document.getElementById('leaders-list');
+  container.innerHTML = sectors.map(sector => {
+    const sectorLeaders = sector.leaders.map(leader => {
+      const id = `${sector.sector}-${leader.code}`;
+      const isExpanded = state.expandedLeaders[id];
+      const rankBadge = leader.rank === 1 ? 'badge-gold' : (leader.rank === 2 ? 'badge-silver' : 'badge-bronze');
+      const rankText = leader.rank === 1 ? '龙一' : (leader.rank === 2 ? '龙二' : '龙三');
+      const typeBadge = leader.type === '中军' ? 'badge-info' : (leader.type === '连板先锋' ? 'badge-up' : 'badge-warn');
+      const changeColor = leader.dayChange.startsWith('+') ? 'var(--up-red)' : 'var(--down-green)';
+
+      return `
+        <div class="leader-card" style="margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <div class="leader-header" style="padding:14px 16px;background:var(--card-bg);cursor:pointer;" onclick="toggleLeaderDetail('${id}')">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <span class="badge ${rankBadge}" style="font-size:14px;padding:4px 10px;">${rankText}</span>
+              <span style="font-size:18px;font-weight:700;color:var(--text-primary);">${leader.name}</span>
+              <span style="font-size:13px;color:var(--text-secondary);">${leader.code}</span>
+              <span class="badge ${typeBadge}">${leader.type}</span>
+              ${leader.isLimitUp ? '<span class="badge badge-up">涨停</span>' : ''}
+              ${leader.boardCount > 0 ? `<span class="badge badge-warn">${leader.boardCount}连板</span>` : ''}
+              <span style="margin-left:auto;font-size:16px;font-weight:700;color:${changeColor};">${leader.dayChange}</span>
+              <svg style="width:16px;height:16px;color:var(--text-secondary);transform:rotate(${isExpanded ? 180 : 0}deg);transition:transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div style="display:flex;gap:24px;margin-top:8px;font-size:13px;color:var(--text-secondary);flex-wrap:wrap;">
+              <span>市值：<strong style="color:var(--text-primary);">${leader.marketCap}</strong></span>
+              <span>成交额：<strong style="color:var(--text-primary);">${leader.volume}</strong></span>
+              <span>周涨幅：<strong style="color:${leader.weekChange.startsWith('+') ? 'var(--up-red)' : 'var(--down-green)'};">${leader.weekChange}</strong></span>
+            </div>
+          </div>
+          ${isExpanded ? `
+          <div class="leader-detail" style="padding:16px;background:var(--bg-secondary);border-top:1px solid var(--border);">
+            <div style="margin-bottom:14px;">
+              <div style="font-size:13px;font-weight:700;color:var(--accent-gold);margin-bottom:6px;">排名核心原因</div>
+              <div style="font-size:14px;color:var(--text-primary);line-height:1.6;">${leader.reason}</div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="font-size:13px;font-weight:700;color:var(--info-blue);margin-bottom:6px;">上涨逻辑</div>
+              <div style="font-size:14px;color:var(--text-primary);line-height:1.6;">${leader.logic}</div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="font-size:13px;font-weight:700;color:var(--up-red);margin-bottom:6px;">催化因素</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                ${leader.catalysts.map(c => `<span class="badge badge-warn" style="font-size:12px;">${c}</span>`).join('')}
+              </div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--down-green);margin-bottom:6px;">风险提示</div>
+              <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">${leader.risk}</div>
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+          <span class="badge badge-gold" style="font-size:15px;padding:5px 12px;">${sector.sector}</span>
+          <span style="font-size:13px;color:var(--text-secondary);">${sector.leaders.length}只龙头 · 龙一/龙二/龙三</span>
+        </div>
+        ${sectorLeaders}
+      </div>
+    `;
+  }).join('');
+}
+
+function setLeaderFilter(filter) {
+  state.leaderFilter = filter;
+  renderLeaderStocks();
+}
+
+function toggleLeaderDetail(id) {
+  state.expandedLeaders[id] = !state.expandedLeaders[id];
+  renderLeaderStocks();
+}
+
+// ===== 渲染：执行清单 =====
+function renderChecklist() {
+  const container = document.getElementById('checklist-container');
+  container.innerHTML = state.checklist.map(item => `
+    <div class="checklist-item ${item.checked ? 'checked' : ''}" onclick="toggleChecklist(${item.id})">
+      <div class="checkbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="cl-content">
+        <div class="cl-title">
+          ${item.title}
+          <span class="cl-time">${item.time}</span>
+        </div>
+        <div class="cl-desc">${item.desc}</div>
+      </div>
+    </div>
+  `).join('');
+
+  const done = state.checklist.filter(i => i.checked).length;
+  const total = state.checklist.length;
+  document.getElementById('cl-progress-text').textContent = `${done} / ${total} 完成`;
+  document.getElementById('cl-progress-fill').style.width = (done / total * 100) + '%';
+}
+
+function toggleChecklist(id) {
+  const item = state.checklist.find(i => i.id === id);
+  if (item) {
+    item.checked = !item.checked;
+    renderChecklist();
+  }
+}
+
+// ===== API 数据交互层 =====
+const API_BASE = ''; // 同源部署，使用相对路径
+
+const apiClient = {
+  async request(endpoint, options = {}) {
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (err) {
+      console.warn('API 请求失败:', endpoint, err.message);
+      return null;
+    }
+  },
+  health: () => apiClient.request('/api/health'),
+  getDaily: (date) => apiClient.request(`/api/daily/${date}`),
+  getDailyList: (params) => apiClient.request('/api/daily?' + new URLSearchParams(params)),
+  getWeekly: () => apiClient.request('/api/weekly'),
+  getSectors: (params) => apiClient.request('/api/sectors?' + new URLSearchParams(params)),
+  getSectorHistory: (sector) => apiClient.request(`/api/sectors/${sector}/history`),
+  getLeaders: (params) => apiClient.request('/api/leaders?' + new URLSearchParams(params)),
+  getStocks: (params) => apiClient.request('/api/stocks?' + new URLSearchParams(params)),
+  getChecklist: (date) => apiClient.request('/api/checklist?date=' + date),
+  getConfig: () => apiClient.request('/api/config'),
+  getStats: () => apiClient.request('/api/config/stats'),
+  saveDaily: (date, data) => apiClient.request(`/api/daily/${date}`, { method: 'PUT', body: JSON.stringify(data) }),
+  saveChecklist: (id, data) => apiClient.request(`/api/checklist/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  toggleChecklist: (id) => apiClient.request(`/api/checklist/${id}/toggle`, { method: 'POST' }),
+  exportAll: () => apiClient.request('/api/export')
+};
+
+// 检查 API 连接状态
+async function checkAPIConnection() {
+  const health = await apiClient.health();
+  state.apiConnected = !!health;
+  updateAPIStatus();
+  if (state.apiConnected) {
+    console.log('已连接到后端 API，数据持久化功能可用');
+    // 加载最新数据
+    loadDataFromAPI();
+  }
+  return state.apiConnected;
+}
+
+// 更新 API 状态显示
+function updateAPIStatus() {
+  const dot = document.getElementById('api-dot');
+  const text = document.getElementById('api-status-text');
+  const btn = document.getElementById('save-btn');
+  if (state.apiConnected) {
+    dot.style.background = 'var(--up-red)';
+    text.textContent = '已连接';
+    btn.disabled = false;
+  } else {
+    dot.style.background = 'var(--text-muted)';
+    text.textContent = '离线模式';
+    btn.disabled = true;
+  }
+}
+
+// 从 API 加载数据
+async function loadDataFromAPI() {
+  try {
+    // 加载最新每日复盘
+    const dailyList = await apiClient.getDailyList({ limit: 10 });
+    if (dailyList && dailyList.length > 0) {
+      console.log(`从数据库加载 ${dailyList.length} 条每日复盘记录`);
+      // 更新历史记录数据
+      state.historyRecords = dailyList.map(d => ({
+        date: d.date.substring(5),
+        weekday: d.weekday,
+        marketIndex: d.market_index,
+        marketVolume: d.market_volume,
+        marketSentiment: d.market_sentiment,
+        goldPoolSummary: d.gold_pool_summary,
+        zhongjunSummary: d.zhongjun_summary,
+        limitUpCount: d.limit_up_count,
+        limitDownCount: d.limit_down_count,
+        conclusion: d.conclusion,
+        actions: d.actions || [],
+        riskNote: d.risk_note
+      }));
+    }
+
+    // 加载应用配置
+    const config = await apiClient.getConfig();
+    if (config) {
+      state.version = config.version || state.version;
+      state.versionDate = config.version_date || state.versionDate;
+      updateVersionDisplay();
+    }
+
+    state.lastSyncTime = new Date().toLocaleString('zh-CN');
+    document.getElementById('sync-time').textContent = '已同步: ' + state.lastSyncTime;
+
+    // 重新渲染当前视图
+    const currentRoute = location.hash.replace('#', '') || 'dashboard';
+    navigate(currentRoute);
+
+  } catch (err) {
+    console.warn('从 API 加载数据失败，使用本地数据:', err.message);
+  }
+}
+
+// 保存当前数据到数据库
+async function saveToDatabase() {
+  if (!state.apiConnected) {
+    alert('未连接到后端数据库，请先启动服务器');
+    return;
+  }
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '保存中...';
+  btn.disabled = true;
+
+  try {
+    // 保存最新的每日复盘（使用今天日期或最新记录日期）
+    const today = new Date().toISOString().split('T')[0];
+    const latestDaily = state.historyRecords[0];
+
+    if (latestDaily) {
+      const dailyData = {
+        weekday: latestDaily.weekday,
+        market_index: latestDaily.marketIndex,
+        market_volume: latestDaily.marketVolume,
+        market_sentiment: latestDaily.marketSentiment,
+        gold_pool_summary: latestDaily.goldPoolSummary,
+        zhongjun_summary: latestDaily.zhongjunSummary,
+        limit_up_count: latestDaily.limitUpCount,
+        limit_down_count: latestDaily.limitDownCount,
+        conclusion: latestDaily.conclusion,
+        actions: latestDaily.actions,
+        risk_note: latestDaily.riskNote
+      };
+
+      // 尝试更新，如果不存在则创建
+      let result = await apiClient.saveDaily(today, dailyData);
+      if (!result || result.error) {
+        // 创建新记录
+        result = await apiClient.request('/api/daily', {
+          method: 'POST',
+          body: JSON.stringify({ date: today, ...dailyData })
+        });
+      }
+    }
+
+    // 保存执行清单状态
+    state.checklist.forEach(async (item) => {
+      await apiClient.toggleChecklist(item.id);
+    });
+
+    state.lastSyncTime = new Date().toLocaleString('zh-CN');
+    document.getElementById('sync-time').textContent = '已保存: ' + state.lastSyncTime;
+    btn.textContent = '✓ 保存成功';
+    setTimeout(() => {
+      btn.textContent = '💾 保存到数据库';
+      btn.disabled = false;
+    }, 2000);
+
+  } catch (err) {
+    console.error('保存失败:', err);
+    btn.textContent = '保存失败';
+    setTimeout(() => {
+      btn.textContent = '💾 保存到数据库';
+      btn.disabled = false;
+    }, 2000);
+  }
+}
+
+// ===== 版本管理 =====
+// 版本号规则：主版本.次版本.修订号
+// 主版本：重大架构重构或功能模块新增
+// 次版本：新增功能模块或重大功能改进
+// 修订号：Bug修复、样式调整、数据更新等小改动
+// 每次修改后自动增加修订号，并同步推送到 GitHub
+// 当前版本：v1.0.0（2026-08-30 首个正式版本，包含8大功能模块）
+function updateVersionDisplay() {
+  const versionEl = document.getElementById('app-version');
+  if (versionEl) {
+    versionEl.textContent = state.version;
+    versionEl.title = `版本 ${state.version} · 发布于 ${state.versionDate}`;
+  }
+}
+
+// ===== 初始化 =====
+document.querySelectorAll('.view').forEach(v => initTabs(v));
+updateVersionDisplay();
+// 检查后端 API 连接，成功则从数据库加载数据
+checkAPIConnection();
+// handleHashChange 已在路由部分调用，会根据初始 hash 渲染对应视图
+</script>
+</body>
+</html>
