@@ -1,0 +1,20 @@
+{
+  "name": "m-d-pro",
+  "version": "1.0.0",
+  "description": "周+日滚动复盘体系 Pro 版 - 全栈应用，支持数据持久化存储与回溯查询",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "init-db": "node database.js"
+  },
+  "keywords": ["stock", "review", "trading", "dashboard"],
+  "author": "zhaochangjian2017",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  }
+}
