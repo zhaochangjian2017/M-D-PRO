@@ -26,9 +26,14 @@ router.get('/', (req, res) => {
     }
     sql += ' ORDER BY date DESC, sector, rank';
     const rows = db.prepare(sql).all(...params);
-    // 解析 JSON 字段
+    // 解析 JSON 字段（增加容错处理）
     rows.forEach(row => {
-      row.catalysts = JSON.parse(row.catalysts || '[]');
+      try {
+        row.catalysts = JSON.parse(row.catalysts || '[]');
+      } catch(e) {
+        // 如果不是JSON格式，按中文逗号分割转为数组
+        row.catalysts = (row.catalysts || '').split(/[、,，]/).filter(s => s.trim());
+      }
       row.is_limit_up = !!row.is_limit_up;
     });
     res.json(rows);
