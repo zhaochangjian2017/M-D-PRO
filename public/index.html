@@ -985,6 +985,35 @@ body {
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       执行清单
     </a>
+    <div style="padding:8px 16px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:8px;">专业分析模块</div>
+    <a class="nav-item" data-route="global-events" href="#global-events">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      全球事件
+    </a>
+    <a class="nav-item" data-route="global-markets" href="#global-markets">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+      外围市场
+    </a>
+    <a class="nav-item" data-route="capital-flow" href="#capital-flow">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      资金监控
+    </a>
+    <a class="nav-item" data-route="board-ladder" href="#board-ladder">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      连板梯队
+    </a>
+    <a class="nav-item" data-route="intraday" href="#intraday">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      分时回顾
+    </a>
+    <a class="nav-item" data-route="expectation" href="#expectation">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      预期管理
+    </a>
+    <a class="nav-item" data-route="portfolio" href="#portfolio">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9M14 17H5M17 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM7 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+      持仓管理
+    </a>
   </nav>
   <div class="sidebar-footer">
     <div class="week-tag">第35周</div>
@@ -992,7 +1021,7 @@ body {
     <div style="margin-top:4px;">模拟数据 · 原型演示</div>
     <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="display:inline-block;padding:2px 6px;background:var(--bg-tertiary);border-radius:4px;font-family:monospace;" id="app-version">v1.0.0</span>
+        <span style="display:inline-block;padding:2px 6px;background:var(--bg-tertiary);border-radius:4px;font-family:monospace;" id="app-version">v2.1.0</span>
         <span id="api-status" style="display:inline-flex;align-items:center;gap:4px;">
           <span class="dot" id="api-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span>
           <span id="api-status-text">离线</span>
@@ -1552,6 +1581,121 @@ body {
     </div>
   </section>
 
+  <!-- ===== 视图：全球事件 ===== -->
+  <section class="view" id="view-global-events">
+    <div class="page-header">
+      <h1>全球重大事件</h1>
+      <div class="desc">全球重大事件汇总 · 对A股市场影响分析 · 关联板块</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="global-events-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadGlobalEvents()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+        <span id="global-events-count" style="margin-left:auto;font-size:13px;color:var(--text-secondary);"></span>
+      </div>
+    </div>
+    <div id="global-events-list"></div>
+  </section>
+
+  <!-- ===== 视图：外围市场 ===== -->
+  <section class="view" id="view-global-markets">
+    <div class="page-header">
+      <h1>外围市场联动</h1>
+      <div class="desc">美股/亚太/港股/大宗商品 · 对A股影响传导分析</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="global-markets-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadGlobalMarkets()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+        <button onclick="syncRealTimeGlobalMarkets()" style="padding:6px 16px;background:var(--info-blue);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;">同步真实行情</button>
+        <span id="global-markets-sync-status" style="font-size:12px;color:var(--text-muted);"></span>
+      </div>
+    </div>
+    <div id="global-markets-content"></div>
+  </section>
+
+  <!-- ===== 视图：资金监控 ===== -->
+  <section class="view" id="view-capital-flow">
+    <div class="page-header">
+      <h1>资金监控</h1>
+      <div class="desc">两融余额 · 北向资金 · 主力资金流向 · 重点个股融资监控</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="capital-flow-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadCapitalFlow()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+      </div>
+    </div>
+    <div id="capital-flow-content"></div>
+  </section>
+
+  <!-- ===== 视图：连板梯队 ===== -->
+  <section class="view" id="view-board-ladder">
+    <div class="page-header">
+      <h1>连板梯队与情绪周期</h1>
+      <div class="desc">连板高度表 · 20cm涨停 · 情绪温度计 · 短线情绪周期定位</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="board-ladder-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadBoardLadder()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+      </div>
+    </div>
+    <div id="board-ladder-content"></div>
+  </section>
+
+  <!-- ===== 视图：分时回顾 ===== -->
+  <section class="view" id="view-intraday">
+    <div class="page-header">
+      <h1>分时回顾</h1>
+      <div class="desc">全天分时关键节点 · 09:15-15:00 时间轴 · 领涨领跌板块</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="intraday-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadIntraday()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+      </div>
+    </div>
+    <div id="intraday-content"></div>
+  </section>
+
+  <!-- ===== 视图：预期管理 ===== -->
+  <section class="view" id="view-expectation">
+    <div class="page-header">
+      <h1>市场预期管理</h1>
+      <div class="desc">早盘预判 vs 收盘验证 · 综合A股+日韩+港股+美股+全球事件</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="expectation-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadExpectation()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+      </div>
+    </div>
+    <div id="expectation-content"></div>
+  </section>
+
+  <!-- ===== 视图：持仓管理 ===== -->
+  <section class="view" id="view-portfolio">
+    <div class="page-header">
+      <h1>持仓管理</h1>
+      <div class="desc">核心持仓 · 建议减仓 · 风险管控 · 仓位配比 · 盈亏分析</div>
+    </div>
+    <div class="card" style="padding:12px 18px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text-secondary);">日期：</span>
+        <input type="date" id="portfolio-date" style="padding:6px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary);" value="2026-08-28">
+        <button onclick="loadPortfolio()" style="padding:6px 16px;background:var(--accent-gold);color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-weight:600;">加载数据</button>
+      </div>
+    </div>
+    <div id="portfolio-content"></div>
+  </section>
+
 </main>
 
 <!-- 免责声明 -->
@@ -1570,7 +1714,7 @@ body {
 <script>
 // ===== 应用状态 =====
 const state = {
-  version: 'v1.0.0',
+  version: 'v2.1.0',
   versionDate: '2026-08-30',
   apiConnected: false,
   lastSyncTime: null,
@@ -1622,10 +1766,10 @@ const state = {
     { name: '赢时胜', code: '300377', sector: '金融科技', cap: '78', position: '低位', volume: '缩量企稳', space: '中低' }
   ],
   timeline: [
-    { date: '08-28 周四', type: 'normal', content: 'AI算力板块续强，<span class="highlight-up">寒武纪大涨3.2%</span>，涨停梯队5只完整。金融科技冲高回落，恒生电子跌破5日线，降级为观察。' },
-    { date: '08-27 周三', type: 'info', content: '数据要素板块受政策刺激爆发，<span class="highlight-up">板块涨幅第2</span>，纳入替补观察池。机器人板块中军埃斯顿回踩10日线获支撑。' },
-    { date: '08-26 周二', type: 'normal', content: '周金池三板块全线飘红，AI算力领涨。<span class="highlight-down">房地产板块龙头保利发展跌停</span>，确认避雷。' },
-    { date: '08-25 周一', type: 'danger', content: '开盘前确认周金池：AI算力、机器人、金融科技。周黑池：房地产、白酒、医药商业。白酒板块竞价核按钮，全周规避。' }
+    { date: '08-28 周五', type: 'normal', content: '大盘窄幅震荡微跌0.11%，成交9704亿。AI算力板块续强，寒武纪大涨，涨停梯队完整。金融科技冲高回落，恒生电子跌破5日线，降级为观察。' },
+    { date: '08-27 周四', type: 'info', content: '大盘大涨1.13%，成交10102亿。数据要素板块受政策刺激爆发，板块涨幅居前，纳入替补观察池。机器人板块中军埃斯顿回踩10日线获支撑。' },
+    { date: '08-26 周三', type: 'normal', content: '大盘上涨0.59%，成交8572亿。周金池三板块全线飘红，AI算力领涨。房地产板块龙头保利发展跌停，确认避雷。' },
+    { date: '08-25 周二', type: 'danger', content: '大盘微涨0.19%，成交8589亿。开盘前确认周金池：AI算力、机器人、金融科技。周黑池：房地产、白酒、医药商业。白酒板块竞价核按钮，全周规避。' }
   ],
   checklist: [
     { id: 1, time: '5分钟', title: '看排名', desc: '查看今日板块涨幅榜，比对本周累计涨幅榜，看金池是否掉队。', checked: false },
@@ -2108,11 +2252,18 @@ function navigate(route) {
   if (route === 'leaders') renderLeaderStocks();
   if (route === 'stock') renderStock();
   if (route === 'checklist') renderChecklist();
+  if (route === 'global-events') loadGlobalEvents();
+  if (route === 'global-markets') loadGlobalMarkets();
+  if (route === 'capital-flow') loadCapitalFlow();
+  if (route === 'board-ladder') loadBoardLadder();
+  if (route === 'intraday') loadIntraday();
+  if (route === 'expectation') loadExpectation();
+  if (route === 'portfolio') loadPortfolio();
 }
 
 function handleHashChange() {
   const hash = location.hash.replace('#', '') || 'dashboard';
-  const validRoutes = ['dashboard', 'weekly', 'daily', 'tracking', 'history', 'leaders', 'stock', 'checklist'];
+  const validRoutes = ['dashboard', 'weekly', 'daily', 'tracking', 'history', 'leaders', 'stock', 'checklist', 'global-events', 'global-markets', 'capital-flow', 'board-ladder', 'intraday', 'expectation', 'portfolio'];
   navigate(validRoutes.includes(hash) ? hash : 'dashboard');
 }
 
@@ -2566,13 +2717,47 @@ function toggleTrackDetail(id) {
 }
 
 // ===== 渲染：历史记录 =====
-function renderHistory() {
-  const records = state.historyRecords;
+async function renderHistory() {
+  // 从数据库API读取真实复盘数据
+  const dailyData = await apiClient.request('/api/daily?limit=20');
+  let records = [];
+
+  if (dailyData && dailyData.length > 0) {
+    records = dailyData.map(d => {
+      let goldPoolSummary = '';
+      let zhongjunSummary = '';
+      let actions = [];
+      try {
+        const gp = JSON.parse(d.gold_pool_summary || '[]');
+        goldPoolSummary = gp.map(g => `${g.name}${g.change || ''}`).join('，');
+      } catch(e) { goldPoolSummary = d.gold_pool_summary || ''; }
+      try {
+        const zj = JSON.parse(d.zhongjun_summary || '[]');
+        zhongjunSummary = zj.map(z => `${z.name}${z.change || ''}${z.status || ''}`).join('，');
+      } catch(e) { zhongjunSummary = d.zhongjun_summary || ''; }
+      try { actions = JSON.parse(d.actions || '[]'); } catch(e) { actions = []; }
+      const dateParts = d.date.split('-');
+      return {
+        date: `${dateParts[1]}-${dateParts[2]}`,
+        fullDate: d.date,
+        weekday: d.weekday || '',
+        marketIndex: d.market_index || '',
+        marketVolume: d.market_volume || '',
+        marketSentiment: d.market_sentiment || '中性',
+        goldPoolSummary, zhongjunSummary,
+        limitUpCount: d.limit_up_count || 0,
+        limitDownCount: d.limit_down_count || 0,
+        conclusion: d.conclusion || '',
+        actions,
+        riskNote: d.risk_note || '无重大风险'
+      };
+    });
+  }
 
   // 统计
   const totalDays = records.length;
   const upDays = records.filter(r => r.marketIndex.startsWith('+')).length;
-  const avgLimit = Math.round(records.reduce((sum, r) => sum + r.limitUpCount, 0) / totalDays * 10) / 10;
+  const avgLimit = totalDays > 0 ? Math.round(records.reduce((sum, r) => sum + r.limitUpCount, 0) / totalDays * 10) / 10 : 0;
   const totalActions = records.reduce((sum, r) => sum + r.actions.length, 0);
 
   document.getElementById('hist-total-days').textContent = totalDays;
@@ -2596,6 +2781,10 @@ function renderHistory() {
 
   // 渲染列表
   const list = document.getElementById('history-list');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无历史复盘记录，请先在每日复盘模块添加复盘数据</div>';
+    return;
+  }
   list.innerHTML = filtered.map((r, i) => {
     const isExpanded = state.expandedHistoryRows[r.date];
     const isUp = r.marketIndex.startsWith('+');
@@ -2796,6 +2985,352 @@ function toggleChecklist(id) {
     item.checked = !item.checked;
     renderChecklist();
   }
+}
+
+// ===== 专业模块渲染函数 =====
+
+// 全球事件
+async function loadGlobalEvents() {
+  const date = document.getElementById('global-events-date').value;
+  const data = await apiClient.request(`/api/advanced/global-events?date=${date}`);
+  const container = document.getElementById('global-events-list');
+  document.getElementById('global-events-count').textContent = data && data.length ? `共 ${data.length} 条事件` : '暂无数据';
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无全球事件数据，请先在后端录入或选择其他日期</div>';
+    return;
+  }
+  container.innerHTML = data.map(e => `
+    <div class="card" style="margin-bottom:12px;border-left:4px solid ${e.impact === '偏多' ? 'var(--up-red)' : e.impact === '偏空' ? 'var(--down-green)' : 'var(--info-blue)'};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+        <span class="badge ${e.impact === '偏多' ? 'badge-up' : e.impact === '偏空' ? 'badge-down' : 'badge-blue'}">${e.impact || '中性'}</span>
+        <span class="badge badge-gold">${e.category || '其他'}</span>
+        <span style="font-size:16px;font-weight:700;">${e.title}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text-muted);">${e.date}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;">${e.description || ''}</div>
+      ${e.market_impact ? `<div style="font-size:13px;color:var(--accent-gold);margin-bottom:6px;"><strong>对A股影响：</strong>${e.market_impact}</div>` : ''}
+      ${e.related_sectors && e.related_sectors !== '[]' ? `<div style="font-size:12px;color:var(--text-muted);">关联板块：${e.related_sectors}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// 外围市场
+async function loadGlobalMarkets() {
+  const date = document.getElementById('global-markets-date').value;
+  const data = await apiClient.request(`/api/advanced/global-markets?date=${date}`);
+  const container = document.getElementById('global-markets-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无外围市场数据</div>';
+    return;
+  }
+  const regions = [...new Set(data.map(d => d.region))];
+  container.innerHTML = regions.map(region => {
+    const items = data.filter(d => d.region === region);
+    return `
+      <div class="card" style="margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">${region}</div>
+        <div class="grid grid-3">
+          ${items.map(m => `
+            <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${m.index_name}</div>
+              <div style="font-size:18px;font-weight:700;">${m.index_value || '-'}</div>
+              <div style="font-size:14px;font-weight:600;color:${m.change_pct >= 0 ? 'var(--up-red)' : 'var(--down-green)'};">${m.change_pct >= 0 ? '+' : ''}${m.change_pct || 0}%</div>
+              ${m.impact_on_a_share ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${m.impact_on_a_share}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 同步真实行情数据（外围市场）
+async function syncRealTimeGlobalMarkets() {
+  const statusEl = document.getElementById('global-markets-sync-status');
+  const container = document.getElementById('global-markets-content');
+
+  statusEl.textContent = '正在获取真实行情...';
+  statusEl.style.color = 'var(--info-blue)';
+
+  try {
+    // 调用实时行情 API
+    const response = await fetch('/api/market/full');
+    if (!response.ok) throw new Error('API请求失败');
+    const data = await response.json();
+
+    // 合并外围市场和大宗商品
+    const globalItems = (data.global_market || []).map(item => ({
+      region: '全球指数',
+      index_name: item.name_cn || item.name,
+      index_value: parseFloat(item.current),
+      change_pct: parseFloat(item.changePct),
+      change_abs: parseFloat(item.change),
+      impact_on_a_share: '实时行情 · ' + (item.date || '') + ' ' + (item.time || '')
+    }));
+
+    const commodityItems = (data.commodity || []).map(item => ({
+      region: '大宗商品',
+      index_name: item.name_cn || item.name,
+      index_value: parseFloat(item.current),
+      change_pct: parseFloat(item.changePct),
+      change_abs: parseFloat(item.change),
+      impact_on_a_share: '实时行情 · ' + (item.date || '') + ' ' + (item.time || '')
+    }));
+
+    const allItems = [...globalItems, ...commodityItems];
+
+    if (allItems.length === 0) {
+      container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">未获取到实时行情数据</div>';
+      statusEl.textContent = '获取失败';
+      statusEl.style.color = 'var(--down-green)';
+      return;
+    }
+
+    // 按区域分组渲染
+    const regions = [...new Set(allItems.map(d => d.region))];
+    container.innerHTML = regions.map(region => {
+      const items = allItems.filter(d => d.region === region);
+      return `
+        <div class="card" style="margin-bottom:16px;border-left:4px solid var(--info-blue);">
+          <div style="font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+            ${region}
+            <span class="badge badge-blue" style="font-size:10px;">实时</span>
+          </div>
+          <div class="grid grid-3">
+            ${items.map(m => `
+              <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${m.index_name}</div>
+                <div style="font-size:18px;font-weight:700;">${m.index_value || '-'}</div>
+                <div style="font-size:14px;font-weight:600;color:${m.change_pct >= 0 ? 'var(--up-red)' : 'var(--down-green)'};">${m.change_pct >= 0 ? '+' : ''}${m.change_pct || 0}%</div>
+                ${m.impact_on_a_share ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${m.impact_on_a_share}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    statusEl.textContent = `已同步 ${allItems.length} 条真实数据 · ${new Date().toLocaleTimeString()}`;
+    statusEl.style.color = 'var(--up-red)';
+
+  } catch (err) {
+    console.error('同步真实行情失败:', err);
+    statusEl.textContent = '同步失败: ' + err.message;
+    statusEl.style.color = 'var(--down-green)';
+  }
+}
+
+// 资金监控
+async function loadCapitalFlow() {
+  const date = document.getElementById('capital-flow-date').value;
+  const data = await apiClient.request(`/api/advanced/capital-flow?date=${date}`);
+  const container = document.getElementById('capital-flow-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无资金监控数据</div>';
+    return;
+  }
+  const types = [...new Set(data.map(d => d.flow_type))];
+  container.innerHTML = types.map(type => {
+    const items = data.filter(d => d.flow_type === type);
+    return `
+      <div class="card" style="margin-bottom:16px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">${type}</div>
+        <table class="data-table">
+          <thead><tr><th>名称</th><th>净流入</th><th>流入</th><th>流出</th><th>变动</th><th>说明</th></tr></thead>
+          <tbody>
+            ${items.map(f => `
+              <tr>
+                <td style="font-weight:600;">${f.name}</td>
+                <td style="color:${f.net_inflow >= 0 ? 'var(--up-red)' : 'var(--down-green)'};font-weight:600;">${f.net_inflow >= 0 ? '+' : ''}${f.net_inflow || 0}亿</td>
+                <td>${f.inflow || 0}亿</td>
+                <td>${f.outflow || 0}亿</td>
+                <td style="color:${f.change_pct >= 0 ? 'var(--up-red)' : 'var(--down-green)'};">${f.change_pct || 0}%</td>
+                <td style="font-size:12px;color:var(--text-secondary);">${f.description || ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+}
+
+// 连板梯队
+async function loadBoardLadder() {
+  const date = document.getElementById('board-ladder-date').value;
+  const data = await apiClient.request(`/api/advanced/board-ladder?date=${date}`);
+  const container = document.getElementById('board-ladder-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无连板梯队数据</div>';
+    return;
+  }
+  const maxBoard = Math.max(...data.map(d => d.board_count));
+  const limitUpCount = data.length;
+  const cm20 = data.filter(d => d.is_20cm).length;
+  container.innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">连板高度</div><div class="kpi-value" style="color:var(--up-red);">${maxBoard}板</div><div class="kpi-sub">市场情绪高度</div></div>
+      <div class="kpi-card"><div class="kpi-label">涨停数</div><div class="kpi-value" style="color:var(--accent-gold);">${limitUpCount}</div><div class="kpi-sub">含连板+首板</div></div>
+      <div class="kpi-card"><div class="kpi-label">20cm涨停</div><div class="kpi-value" style="color:var(--warning-orange);">${cm20}</div><div class="kpi-sub">创业板/科创板</div></div>
+      <div class="kpi-card"><div class="kpi-label">情绪温度</div><div class="kpi-value" style="color:var(--info-blue);">${Math.min(100, maxBoard * 10 + limitUpCount)}</div><div class="kpi-sub">0-100分</div></div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">连板梯队表</div>
+      <table class="data-table">
+        <thead><tr><th>连板</th><th>股票名称</th><th>代码</th><th>核心概念</th><th>涨幅</th><th>成交额</th><th>换手</th><th>备注</th></tr></thead>
+        <tbody>
+          ${data.sort((a,b) => b.board_count - a.board_count).map(s => `
+            <tr>
+              <td><span class="badge ${s.board_count >= 5 ? 'badge-up' : s.board_count >= 3 ? 'badge-warn' : 'badge-blue'}">${s.board_count}连板</span></td>
+              <td style="font-weight:600;">${s.stock_name}${s.is_new_high ? ' <span style="color:var(--up-red);font-size:11px;">创新高</span>' : ''}${s.is_20cm ? ' <span style="color:var(--warning-orange);font-size:11px;">20cm</span>' : ''}</td>
+              <td style="font-size:12px;color:var(--text-muted);">${s.stock_code || '-'}</td>
+              <td><span class="badge badge-gold">${s.concept || '-'}</span></td>
+              <td style="color:var(--up-red);font-weight:600;">+${s.change_pct || 10}%</td>
+              <td>${s.volume || '-'}</td>
+              <td>${s.turnover_rate || '-'}</td>
+              <td style="font-size:12px;color:var(--text-secondary);">${s.note || ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// 分时回顾
+async function loadIntraday() {
+  const date = document.getElementById('intraday-date').value;
+  const data = await apiClient.request(`/api/advanced/intraday-review?date=${date}`);
+  const container = document.getElementById('intraday-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无分时回顾数据</div>';
+    return;
+  }
+  container.innerHTML = `
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px;">全天分时关键节点</div>
+      <div class="timeline">
+        ${data.sort((a,b) => (a.start_time || '').localeCompare(b.start_time || '')).map(t => `
+          <div class="timeline-item">
+            <div class="timeline-date">${t.start_time || ''} - ${t.end_time || ''} · ${t.time_period || ''}</div>
+            <div style="display:flex;gap:20px;margin-bottom:6px;font-size:13px;">
+              <span>沪指: <strong style="color:var(--text-primary);">${t.sh_index || '-'}</strong></span>
+              <span>深成: <strong style="color:var(--text-primary);">${t.sz_index || '-'}</strong></span>
+              <span>创业板: <strong style="color:var(--text-primary);">${t.chinext_index || '-'}</strong></span>
+              ${t.volume ? `<span>成交: <strong>${t.volume}</strong></span>` : ''}
+            </div>
+            <div class="timeline-content">${t.description || ''}</div>
+            ${t.key_events ? `<div style="font-size:12px;color:var(--accent-gold);margin-top:4px;">关键事件: ${t.key_events}</div>` : ''}
+            ${t.leading_sectors && t.leading_sectors !== '[]' ? `<div style="font-size:12px;color:var(--up-red);margin-top:2px;">领涨: ${t.leading_sectors}</div>` : ''}
+            ${t.lagging_sectors && t.lagging_sectors !== '[]' ? `<div style="font-size:12px;color:var(--down-green);margin-top:2px;">领跌: ${t.lagging_sectors}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// 预期管理
+async function loadExpectation() {
+  const date = document.getElementById('expectation-date').value;
+  const data = await apiClient.request(`/api/advanced/expectation-management?date=${date}`);
+  const container = document.getElementById('expectation-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无预期管理数据</div>';
+    return;
+  }
+  container.innerHTML = data.map(e => `
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <span class="badge badge-gold" style="font-size:14px;">${e.phase || ''}</span>
+        <span style="font-size:12px;color:var(--text-muted);">${e.date}</span>
+        <span style="margin-left:auto;font-size:13px;">情绪等级: <strong style="color:var(--accent-gold);">${e.sentiment_level || 50}/100</strong></span>
+      </div>
+      <div class="grid grid-2" style="margin-bottom:14px;">
+        <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">美股</div>
+          <div style="font-size:14px;">${e.us_market || '-'}</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">亚太市场</div>
+          <div style="font-size:14px;">${e.asia_market || '-'}</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">港股</div>
+          <div style="font-size:14px;">${e.hk_market || '-'}</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-tertiary);border-radius:6px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">A股预期</div>
+          <div style="font-size:14px;color:var(--accent-gold);">${e.a_share_expected || '-'}</div>
+        </div>
+      </div>
+      ${e.a_share_actual ? `
+        <div style="padding:12px;background:var(--up-red-bg);border-radius:6px;margin-bottom:14px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">A股实际（验证）</div>
+          <div style="font-size:14px;">${e.a_share_actual}</div>
+        </div>
+      ` : ''}
+      ${e.conclusion ? `
+        <div style="padding:12px;background:var(--bg-secondary);border-left:3px solid var(--accent-gold);border-radius:4px;margin-bottom:10px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">结论</div>
+          <div style="font-size:14px;line-height:1.6;">${e.conclusion}</div>
+        </div>
+      ` : ''}
+      ${e.verification ? `
+        <div style="padding:12px;background:var(--info-blue-bg);border-radius:6px;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">预判验证</div>
+          <div style="font-size:14px;">${e.verification}</div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+// 持仓管理
+async function loadPortfolio() {
+  const date = document.getElementById('portfolio-date').value;
+  const data = await apiClient.request(`/api/advanced/portfolio-management?date=${date}`);
+  const container = document.getElementById('portfolio-content');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="card" style="padding:40px;text-align:center;color:var(--text-muted);">暂无持仓数据</div>';
+    return;
+  }
+  const totalValue = data.reduce((sum, p) => sum + (p.market_value || 0), 0);
+  const totalPL = data.reduce((sum, p) => sum + (p.profit_loss || 0), 0);
+  const coreCount = data.filter(p => p.position_type === '核心持仓').length;
+  const reduceCount = data.filter(p => p.recommendation === '减仓').length;
+  container.innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">持仓总数</div><div class="kpi-value">${data.length}</div><div class="kpi-sub">核心 ${coreCount} 只</div></div>
+      <div class="kpi-card"><div class="kpi-label">总市值</div><div class="kpi-value" style="color:var(--accent-gold);">${totalValue.toLocaleString()}</div><div class="kpi-sub">万元</div></div>
+      <div class="kpi-card"><div class="kpi-label">总盈亏</div><div class="kpi-value" style="color:${totalPL >= 0 ? 'var(--up-red)' : 'var(--down-green)'};">${totalPL >= 0 ? '+' : ''}${totalPL.toLocaleString()}</div><div class="kpi-sub">${totalValue > 0 ? (totalPL / totalValue * 100).toFixed(2) + '%' : ''}</div></div>
+      <div class="kpi-card"><div class="kpi-label">建议减仓</div><div class="kpi-value" style="color:var(--warning-orange);">${reduceCount}</div><div class="kpi-sub">需关注风险</div></div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">持仓明细</div>
+      <table class="data-table">
+        <thead><tr><th>类型</th><th>股票</th><th>代码</th><th>市场</th><th>持仓</th><th>成本</th><th>现价</th><th>市值</th><th>盈亏</th><th>仓位</th><th>建议</th><th>风险</th></tr></thead>
+        <tbody>
+          ${data.map(p => `
+            <tr>
+              <td><span class="badge ${p.position_type === '核心持仓' ? 'badge-up' : p.position_type === '建议减仓' ? 'badge-warn' : 'badge-blue'}">${p.position_type || '-'}</span></td>
+              <td style="font-weight:600;">${p.stock_name}</td>
+              <td style="font-size:12px;color:var(--text-muted);">${p.stock_code || '-'}</td>
+              <td>${p.market || 'A股'}</td>
+              <td>${p.shares || 0}股</td>
+              <td>${p.cost_price || '-'}</td>
+              <td style="font-weight:600;">${p.current_price || '-'}</td>
+              <td>${p.market_value || 0}万</td>
+              <td style="color:${p.profit_loss >= 0 ? 'var(--up-red)' : 'var(--down-green)'};font-weight:600;">${p.profit_loss >= 0 ? '+' : ''}${p.profit_loss || 0}万<br><span style="font-size:11px;">${p.profit_loss_pct || 0}%</span></td>
+              <td>${p.position_ratio || 0}%</td>
+              <td><span class="badge ${p.recommendation === '减仓' ? 'badge-warn' : p.recommendation === '持有' ? 'badge-blue' : 'badge-up'}">${p.recommendation || '-'}</span></td>
+              <td style="font-size:11px;color:var(--text-secondary);max-width:150px;">${p.risk_note || ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 // ===== API 数据交互层 =====
