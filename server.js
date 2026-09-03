@@ -30,7 +30,7 @@ importSampleData();
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: 'v1.0.0',
+    version: 'v2.4.0',
     timestamp: new Date().toISOString(),
     database: 'connected'
   });
@@ -57,12 +57,18 @@ app.use('/api/checklist', require('./routes/checklist'));
 // 应用配置 API
 app.use('/api/config', require('./routes/config'));
 
+// 高级模块 API（全球事件、外围市场、资金监控、连板梯队、分时回顾、预期管理、持仓管理）
+app.use('/api/advanced', require('./routes/advanced'));
+
+// 实时行情 API（新浪财经数据源）
+app.use('/api/market', require('./routes/market'));
+
 // 数据导出 API
 app.get('/api/export', (req, res) => {
   try {
     const data = {
       exportTime: new Date().toISOString(),
-      version: 'v1.0.0',
+      version: 'v2.4.0',
       weekly_reviews: db.prepare('SELECT * FROM weekly_reviews ORDER BY year DESC, week_number DESC').all(),
       daily_reviews: db.prepare('SELECT * FROM daily_reviews ORDER BY date DESC').all(),
       sector_tracking: db.prepare('SELECT * FROM sector_tracking ORDER BY date DESC, sector_name').all(),
