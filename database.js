@@ -315,11 +315,11 @@ function initDatabase() {
   if (!configExists) {
     db.prepare(`
       INSERT INTO app_config (id, version, version_date, current_week, current_year, settings)
-      VALUES (1, 'v2.0.0', date('now'), 35, 2026, '{}')
+      VALUES (1, 'v2.4.0', date('now'), 36, 2026, '{}')
     `).run();
   } else {
     // 更新版本号
-    db.prepare("UPDATE app_config SET version = 'v2.0.0', version_date = date('now') WHERE id = 1").run();
+    db.prepare("UPDATE app_config SET version = 'v2.4.0', version_date = date('now') WHERE id = 1").run();
   }
 
   console.log('数据库初始化完成！');
