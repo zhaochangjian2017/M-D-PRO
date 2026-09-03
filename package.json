@@ -1,6 +1,6 @@
 {
   "name": "m-d-pro",
-  "version": "1.0.0",
+  "version": "2.4.0",
   "description": "周+日滚动复盘体系 Pro 版 - 全栈应用，支持数据持久化存储与回溯查询",
   "main": "server.js",
   "scripts": {
